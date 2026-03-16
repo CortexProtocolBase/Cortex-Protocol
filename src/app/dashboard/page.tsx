@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Copy } from "lucide-react";
+import { useAccount } from "wagmi";
 import {
   AreaChart,
   Area,
@@ -106,9 +107,15 @@ function CustomTooltip({
 export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState<string>("1Y");
   const [copied, setCopied] = useState(false);
+  const { address } = useAccount();
+
+  const displayAddress = address
+    ? `${address.slice(0, 6)}…${address.slice(-4)}`
+    : "Not Connected";
 
   const handleCopy = () => {
-    navigator.clipboard.writeText("0x1234...5678");
+    if (!address) return;
+    navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -126,10 +133,11 @@ export default function DashboardPage() {
 
           <button
             onClick={handleCopy}
-            className="cursor-pointer flex items-center gap-2 bg-card-solid border border-border rounded-lg px-3 py-1.5 text-sm text-muted hover:text-foreground transition-colors duration-200"
+            disabled={!address}
+            className="cursor-pointer flex items-center gap-2 bg-card-solid border border-border rounded-lg px-3 py-1.5 text-sm text-muted hover:text-foreground transition-colors duration-200 disabled:opacity-50 disabled:cursor-default"
           >
-            <span className="font-mono">0x1234...5678</span>
-            <Copy size={14} className={copied ? "text-primary" : ""} />
+            <span className="font-mono">{displayAddress}</span>
+            {address && <Copy size={14} className={copied ? "text-primary" : ""} />}
           </button>
         </div>
 

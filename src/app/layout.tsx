@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import WalletProvider from "@/providers/WalletProvider";
 import RealtimeProvider from "@/providers/RealtimeProvider";
 import "./globals.css";
 
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="bg-background text-foreground font-body antialiased">
-        <RealtimeProvider>{children}</RealtimeProvider>
+        <WalletProvider>
+          <RealtimeProvider>{children}</RealtimeProvider>
+        </WalletProvider>
       </body>
     </html>
   );

@@ -208,9 +208,8 @@ function useScrollReveal() {
 
 const footerLinks = [
   { label: "Docs", href: "#" },
-  { label: "GitHub", href: "#" },
-  { label: "Discord", href: "#" },
-  { label: "Twitter", href: "#" },
+  { label: "GitHub", href: "https://github.com/CortexProtocolBase/Cortex-Protocol" },
+  { label: "Twitter", href: "https://x.com/CortexBase" },
 ];
 
 /* ───────────────────────── Terminal sequences ───────────────────────── */
@@ -497,7 +496,9 @@ export default function Home() {
                 Dashboard
               </Link>
               <a
-                href="#"
+                href="https://github.com/CortexProtocolBase/Cortex-Protocol"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="cursor-pointer rounded-lg border border-border px-5 py-2.5 text-muted transition-all duration-200 hover:text-foreground hover:border-border-hover"
                 aria-label="GitHub"
               >
@@ -696,6 +697,8 @@ export default function Home() {
               <a
                 key={link.label}
                 href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="cursor-pointer text-sm text-muted transition-colors duration-200 hover:text-foreground"
               >
                 {link.label}

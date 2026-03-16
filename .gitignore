@@ -4,3 +4,4 @@ node_modules/
 .claude/skills/
 tsconfig.tsbuildinfo
 .vercel
+.DS_Store

@@ -5,6 +5,12 @@ export const metadata: Metadata = {
   title: "CORTEX | AI Portfolio Strategist",
   description:
     "Autonomous AI-powered portfolio management protocol. Deposit, allocate, earn.",
+  icons: {
+    icon: [
+      { url: "/cortex-logo.png", type: "image/png" },
+    ],
+    apple: "/cortex-logo.png",
+  },
 };
 
 export default function RootLayout({

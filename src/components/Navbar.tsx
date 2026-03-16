@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
@@ -23,7 +24,14 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="cursor-pointer">
+        <Link href="/" className="cursor-pointer flex items-center gap-2">
+          <Image
+            src="/cortex-logo.png"
+            alt="Cortex"
+            width={28}
+            height={28}
+            className="rounded-full"
+          />
           <span className="font-heading text-lg font-bold tracking-tight text-foreground">
             CORTEX
           </span>

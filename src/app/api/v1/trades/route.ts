@@ -1,36 +1,38 @@
 import { NextResponse } from "next/server";
-import { mockTrades } from "@/lib/mock-data";
-import type { TradeActionType, TradeTier } from "@/lib/types";
+import { mockTrades, MOCK_TOTAL_TRADES } from "@/lib/mock-data";
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/constants";
+import type { PaginatedResponse, TradeResponse, Tier, TradeType } from "@/lib/types";
 
-// GET /api/v1/trades?page=1&limit=10&type=all&tier=all
-// Returns: paginated trade log with filters
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10")));
-  const typeFilter = (searchParams.get("type") || "all") as TradeActionType | "all";
-  const tierFilter = (searchParams.get("tier") || "all") as TradeTier | "all";
 
-  // TODO: Replace with Prisma query with pagination (other developer)
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const pageSize = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, parseInt(searchParams.get("pageSize") || String(DEFAULT_PAGE_SIZE), 10))
+  );
+  const tierFilter = searchParams.get("tier") as Tier | null;
+  const typeFilter = searchParams.get("type") as TradeType | null;
+
   let filtered = [...mockTrades];
 
-  if (typeFilter !== "all") {
-    filtered = filtered.filter((t) => t.actionType === typeFilter);
-  }
-  if (tierFilter !== "all") {
+  if (tierFilter) {
     filtered = filtered.filter((t) => t.tier === tierFilter);
   }
+  if (typeFilter) {
+    filtered = filtered.filter((t) => t.type === typeFilter);
+  }
 
-  const total = filtered.length;
-  const totalPages = Math.ceil(total / limit);
-  const start = (page - 1) * limit;
-  const data = filtered.slice(start, start + limit);
+  const total = tierFilter || typeFilter ? filtered.length : MOCK_TOTAL_TRADES;
+  const start = (page - 1) * pageSize;
+  const paginated = filtered.slice(start, start + pageSize);
 
-  return NextResponse.json({
-    data,
+  const response: PaginatedResponse<TradeResponse> = {
+    data: paginated,
     total,
     page,
-    limit,
-    totalPages,
-  });
+    pageSize,
+    timestamp: new Date().toISOString(),
+  };
+  return NextResponse.json(response);
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import RealtimeProvider from "@/providers/RealtimeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="bg-background text-foreground font-body antialiased">
-        {children}
+        <RealtimeProvider>{children}</RealtimeProvider>
       </body>
     </html>
   );

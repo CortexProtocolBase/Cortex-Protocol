@@ -1,84 +1,83 @@
-// =============================================================================
-// CORTEX Protocol — Constants & Configuration
-// Based on CORTEX Blueprint v1.0
-// =============================================================================
+import type { Tier } from "./types";
 
-// --- Chain ---
+// ─── Chain Configuration ─────────────────────────────────────────────
+
 export const BASE_CHAIN_ID = 8453;
-export const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org";
+export const BASE_RPC_URL = "https://mainnet.base.org";
 
-// --- Contract Addresses (to be updated after deployment) ---
+// ─── Contract Addresses (Base Mainnet) ───────────────────────────────
+
 export const CONTRACTS = {
-  CORTEX_VAULT: process.env.NEXT_PUBLIC_VAULT_ADDRESS || "0x0000000000000000000000000000000000000000",
-  CORTEX_TOKEN: process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "0x0000000000000000000000000000000000000000",
-  TRADE_EXECUTOR: process.env.NEXT_PUBLIC_EXECUTOR_ADDRESS || "0x0000000000000000000000000000000000000000",
-  GOVERNOR: process.env.NEXT_PUBLIC_GOVERNOR_ADDRESS || "0x0000000000000000000000000000000000000000",
-  FEE_DISTRIBUTOR: process.env.NEXT_PUBLIC_FEE_DISTRIBUTOR_ADDRESS || "0x0000000000000000000000000000000000000000",
-  ASSET_REGISTRY: process.env.NEXT_PUBLIC_ASSET_REGISTRY_ADDRESS || "0x0000000000000000000000000000000000000000",
+  CORTEX_TOKEN: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  CVAULT: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  STAKING: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  GOVERNANCE: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+  TREASURY: "0x0000000000000000000000000000000000000000" as `0x${string}`,
 } as const;
 
-// --- Known Tokens on Base ---
-export const TOKENS = {
-  WETH: "0x4200000000000000000000000000000000000006",
-  USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-  cbBTC: "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-  AERO: "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
-  DEGEN: "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed",
-} as const;
+// ─── Fee Structure ───────────────────────────────────────────────────
 
-// --- Default Allocation Bands (Section 7.4) ---
-export const DEFAULT_ALLOCATIONS = {
-  core:  { default: 70, min: 50, max: 90 },
-  mid:   { default: 20, min: 5,  max: 35 },
-  degen: { default: 10, min: 0,  max: 15 },
-} as const;
-
-// --- Fee Structure (Section 7.2) ---
 export const FEES = {
-  management: 2,         // 2% annualized
-  performance: 20,       // 20% of profits above HWM
-  withdrawal: 0.5,       // 0.5%
-  deposit: 0,            // Free
+  DEPOSIT: 0,
+  WITHDRAWAL: 0.005,
+  MANAGEMENT: 0.02,
+  PERFORMANCE: 0.2,
 } as const;
 
-// --- Governance Defaults (Section 8.2) ---
+// ─── Tier Configuration ──────────────────────────────────────────────
+
+export const TIER_DEFAULTS: Record<Tier, { min: number; max: number; target: number }> = {
+  Core: { min: 50, max: 90, target: 70 },
+  "Mid-Risk": { min: 5, max: 35, target: 20 },
+  Degen: { min: 0, max: 15, target: 10 },
+};
+
+// ─── Governance Defaults ─────────────────────────────────────────────
+
 export const GOVERNANCE = {
-  proposalQuorum: 4,     // 4% of total supply
-  votingPeriodDays: 3,
-  timelockDelayHours: 24,
-  emergencyBrakeThreshold: 66, // 66% supermajority
-  minProposalTokens: 100_000,  // 100K CORTEX to create proposal
+  QUORUM_PCT: 4,
+  VOTING_PERIOD_DAYS: 3,
+  TIMELOCK_HOURS: 24,
+  EMERGENCY_BRAKE_THRESHOLD: 66,
+  MAX_SLIPPAGE_PCT: 1.5,
+  AI_TRADE_RATE_PER_HOUR: 20,
+  TOTAL_SUPPLY: 1_000_000_000,
 } as const;
 
-// --- Token Info (Section 5.2) ---
-export const TOKEN_INFO = {
-  name: "Cortex Protocol",
-  symbol: "CORTEX",
-  decimals: 18,
-  totalSupply: "1000000000", // 1B fixed, non-mintable
-} as const;
+// ─── Staking Lock Tiers ──────────────────────────────────────────────
 
-// --- Staking Multipliers (Section 5.5) ---
-export const STAKING_MULTIPLIERS = [
-  { lockDays: 0,   multiplier: 1.0, label: "No Lock" },
-  { lockDays: 30,  multiplier: 1.5, label: "1 Month" },
-  { lockDays: 90,  multiplier: 2.0, label: "3 Months" },
-  { lockDays: 180, multiplier: 2.5, label: "6 Months" },
+export const LOCK_TIERS = [
+  { label: "No Lock", days: 0, multiplier: 1 },
+  { label: "1 Month", days: 30, multiplier: 1.5 },
+  { label: "3 Months", days: 90, multiplier: 2 },
+  { label: "6 Months", days: 180, multiplier: 2.5 },
 ] as const;
 
-// --- Dashboard Tiers (Section 8.1) ---
-export const DASHBOARD_TIERS = {
-  tier1: 10_000,       // 10K CORTEX
-  tier2: 100_000,      // 100K CORTEX
-  tier3: 1_000_000,    // 1M CORTEX
+// ─── Fee Distribution ────────────────────────────────────────────────
+
+export const FEE_DISTRIBUTION = {
+  STAKERS_PCT: 50,
+  TREASURY_PCT: 50,
 } as const;
 
-// --- AI Config ---
-export const AI_CONFIG = {
-  tradeCycleMinutes: 10,
-  maxTradesPerHour: 20,
-  maxSlippageDefault: 1.5, // percent
+// ─── API ─────────────────────────────────────────────────────────────
+
+export const API_VERSION = "v1";
+export const DEFAULT_PAGE_SIZE = 20;
+export const MAX_PAGE_SIZE = 100;
+
+// ─── Cache TTLs (seconds) ────────────────────────────────────────────
+
+export const CACHE_TTL = {
+  VAULT_STATS: 30,
+  PORTFOLIO: 60,
+  TRADES: 15,
+  AI_INSIGHTS: 10,
+  GOVERNANCE: 300,
+  STAKING: 60,
+  PERFORMANCE: 120,
 } as const;
 
-// --- API ---
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+// ─── Token Gate ──────────────────────────────────────────────────────
+
+export const TOKEN_GATE_MIN_BALANCE = BigInt(1);

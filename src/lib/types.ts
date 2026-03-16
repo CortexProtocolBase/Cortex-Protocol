@@ -1,213 +1,280 @@
-// =============================================================================
-// CORTEX Protocol — Core Type Definitions
-// Based on CORTEX Blueprint v1.0 Database Schema (Section 11)
-// =============================================================================
+// ─── Database Row Types ──────────────────────────────────────────────
 
-// --- Vault ---
-
-export interface VaultSnapshot {
+export interface DbVaultSnapshot {
   id: string;
-  timestamp: string;
-  totalAssets: string;       // Decimal as string for precision
-  sharePrice: string;
-  totalShares: string;
-  depositorCount: number;
-  coreAlloc: string;
-  midAlloc: string;
-  degenAlloc: string;
-  idleCash: string;
+  tvl: number;
+  share_price: number;
+  apy_24h: number;
+  apy_7d: number;
+  apy_30d: number;
+  depositors: number;
+  created_at: string;
 }
 
-export interface VaultStats {
-  totalAUM: string;
-  sharePrice: string;
-  totalDepositors: number;
-  volume24h: string;
-  performanceSinceInception: string;
-  currentAllocation: {
-    core: string;
-    mid: string;
-    degen: string;
-  };
+export interface DbUserPosition {
+  id: string;
+  wallet_address: string;
+  deposited_amount: number;
+  current_value: number;
+  cvault_shares: number;
+  vault_share_pct: number;
+  entry_date: string;
+  updated_at: string;
 }
 
-export interface UserPosition {
+export interface DbTrade {
   id: string;
-  walletAddress: string;
-  shares: string;
-  depositedValue: string;
-  currentValue: string;
-  pnl: string;
-  pnlPercent: string;
-  depositHistory: DepositRecord[];
-  lastUpdated: string;
-}
-
-// --- Deposits & Withdrawals ---
-
-export interface DepositRecord {
-  id: string;
-  txHash: string;
-  walletAddress: string;
-  asset: "WETH" | "USDC";
-  amount: string;
-  sharesReceived: string;
-  timestamp: string;
-}
-
-export interface WithdrawalRecord {
-  id: string;
-  txHash: string;
-  walletAddress: string;
-  sharesBurned: string;
-  assetsReceived: string;
-  feeCharged: string;
-  timestamp: string;
-}
-
-// --- Trades ---
-
-export type TradeActionType = "swap" | "add_lp" | "remove_lp" | "stake" | "unstake";
-export type TradeTier = "core" | "mid" | "degen";
-export type TradeStatus = "pending" | "executed" | "failed";
-
-export interface Trade {
-  id: string;
-  txHash: string;
-  timestamp: string;
-  actionType: TradeActionType;
-  assetIn: string;
-  assetOut: string;
-  amountIn: string;
-  amountOut: string;
+  type: TradeType;
+  asset_pair: string;
+  amount_usd: number;
   protocol: string;
-  tier: TradeTier;
+  tier: Tier;
+  pnl_usd: number;
   reasoning: string;
-  reasoningHash: string;
-  confidence: number;       // 0-100
-  pnl: string | null;
-  status: TradeStatus;
+  tx_hash: string;
+  executed_at: string;
 }
 
-export interface TradeListParams {
-  page?: number;
-  limit?: number;
-  type?: TradeActionType | "all";
-  tier?: TradeTier | "all";
+export interface DbAllocation {
+  id: string;
+  strategy_name: string;
+  protocol: string;
+  tier: Tier;
+  allocation_pct: number;
+  apy: number;
+  return_30d: number;
+  risk_level: RiskLevel;
+  is_active: boolean;
+  updated_at: string;
+}
+
+export interface DbProposal {
+  id: string;
+  title: string;
+  description: string;
+  proposer: string;
+  status: ProposalStatus;
+  for_votes: number;
+  against_votes: number;
+  quorum_pct: number;
+  start_time: string;
+  end_time: string;
+  created_at: string;
+}
+
+export interface DbStakingPosition {
+  id: string;
+  wallet_address: string;
+  staked_amount: number;
+  lock_duration_days: number;
+  multiplier: number;
+  effective_stake: number;
+  pending_rewards: number;
+  unlock_date: string;
+  created_at: string;
+}
+
+export interface DbRewardHistory {
+  id: string;
+  wallet_address: string;
+  amount: number;
+  token: string;
+  status: RewardStatus;
+  distributed_at: string;
+}
+
+export interface DbAiCycle {
+  id: string;
+  cycle_number: number;
+  decision: AiDecision;
+  reasoning: string;
+  confidence: number;
+  market_regime: MarketRegime;
+  executed_at: string;
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────
+
+export type TradeType = "Swap" | "Add LP" | "Remove LP" | "Stake" | "Unstake";
+export type Tier = "Core" | "Mid-Risk" | "Degen";
+export type RiskLevel = "Low" | "Medium" | "High";
+export type ProposalStatus = "Active" | "Passed" | "Rejected" | "Queued";
+export type RewardStatus = "Claimed" | "Pending" | "Distributed";
+export type AiDecision = "HOLD" | "TRADE" | "REBALANCE";
+export type MarketRegime = "Bullish" | "Bearish" | "Neutral" | "Volatile";
+
+// ─── API Response Types ──────────────────────────────────────────────
+
+export interface ApiResponse<T> {
+  data: T;
+  timestamp: string;
+  cached?: boolean;
 }
 
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;
   page: number;
-  limit: number;
-  totalPages: number;
-}
-
-// --- Portfolio ---
-
-export interface PortfolioPosition {
-  asset: string;
-  amount: string;
-  value: string;
-  tier: TradeTier;
-  allocationPercent: string;
-  priceChange24h: string;
-}
-
-// --- AI ---
-
-export interface AIInsights {
-  currentAnalysis: string;
-  sentimentScores: SentimentScore[];
-  confidenceLevel: number;
-  marketRegime: "bullish" | "bearish" | "neutral" | "volatile";
-  nextRebalanceEta: string;
-  cycleCountToday: number;
-}
-
-export interface SentimentScore {
-  asset: string;
-  score: number;            // -1.0 to +1.0
-  trend: "rising" | "falling" | "stable";
-}
-
-export interface AIReasoningEntry {
-  id: string;
+  pageSize: number;
   timestamp: string;
-  cycleId: string;
-  marketSummary: string;
-  sentimentData: Record<string, number>;
-  riskAssessment: Record<string, unknown>;
-  decision: "trade" | "hold" | "rebalance";
-  confidence: number;
-  tradesProposed: TradeProposal[];
-  tradesExecuted: TradeProposal[];
 }
 
-export interface TradeProposal {
-  actionType: TradeActionType;
-  assetIn: string;
-  assetOut: string;
-  amount: string;
-  targetProtocol: string;
-  maxSlippage: string;
-  reasoning: string;
-}
-
-// --- Governance ---
-
-export type ProposalStatus = "active" | "passed" | "rejected" | "executed" | "expired";
-
-export interface GovernanceProposal {
-  id: string;
-  proposalId: number;
-  proposer: string;
-  title: string;
-  description: string;
-  votesFor: string;
-  votesAgainst: string;
-  status: ProposalStatus;
-  createdAt: string;
-  votingEndsAt: string;
-}
-
-// --- Staking ---
-
-export interface StakingInfo {
-  stakedAmount: string;
-  lockDuration: number;     // days (0 = no lock)
-  multiplier: string;       // 1.0 - 2.5
-  pendingRewards: string;
-  claimHistory: ClaimRecord[];
-  stakedAt: string;
-  unlocksAt: string | null;
-}
-
-export interface ClaimRecord {
-  id: string;
-  amount: string;
-  token: "WETH" | "USDC";
-  claimedAt: string;
-}
-
-// --- Performance ---
-
-export interface PerformanceData {
-  sharePriceSeries: TimeSeriesPoint[];
-  returns: {
-    daily: string;
-    weekly: string;
-    monthly: string;
-    allTime: string;
+export interface VaultStatsResponse {
+  tvl: number;
+  sharePriceUsd: number;
+  apy24h: number;
+  apy7d: number;
+  apy30d: number;
+  depositors: number;
+  totalProfit: number;
+  fees: {
+    management: number;
+    performance: number;
+    withdrawal: number;
+    deposit: number;
   };
-  drawdown: string;
-  sharpeRatio: string;
-  volatility: string;
-  winRate: string;
 }
 
-export interface TimeSeriesPoint {
-  timestamp: string;
-  value: string;
+export interface UserPositionResponse {
+  walletAddress: string;
+  depositedAmount: number;
+  currentValue: number;
+  profitLoss: number;
+  profitLossPct: number;
+  cvaultShares: number;
+  vaultSharePct: number;
+  entryDate: string;
+  recentTransactions: {
+    type: string;
+    amount: number;
+    share: number;
+    date: string;
+  }[];
+}
+
+export interface PortfolioResponse {
+  allocations: {
+    strategyName: string;
+    protocol: string;
+    tier: Tier;
+    allocationPct: number;
+    apy: number;
+    return30d: number;
+    riskLevel: RiskLevel;
+    isActive: boolean;
+  }[];
+  tiers: {
+    name: Tier;
+    allocationPct: number;
+    valueUsd: number;
+  }[];
+  riskMetrics: {
+    sharpeRatio: number;
+    maxDrawdown: number;
+    volatility: number;
+    winRate: number;
+  };
+  lastRebalance: string;
+  nextRebalance: string;
+  confidence: number;
+}
+
+export interface TradeResponse {
+  id: string;
+  time: string;
+  type: TradeType;
+  assetPair: string;
+  amountUsd: number;
+  protocol: string;
+  tier: Tier;
+  pnlUsd: number;
+  pnlPositive: boolean;
+  reasoning: string;
+  txHash: string;
+}
+
+export interface AiInsightsResponse {
+  confidence: number;
+  marketRegime: MarketRegime;
+  nextRebalanceMinutes: number;
+  cyclesToday: number;
+  sentiments: {
+    asset: string;
+    score: number;
+  }[];
+  marketSummary: string;
+}
+
+export interface ReasoningFeedEntry {
+  cycle: number;
+  decision: AiDecision;
+  reasoning: string;
+  time: string;
+  confidence: number;
+}
+
+export interface GovernanceResponse {
+  tokenPrice: number;
+  marketCap: number;
+  totalSupply: number;
+  proposals: {
+    id: string;
+    title: string;
+    status: ProposalStatus;
+    proposer: string;
+    forPct: number;
+    againstPct: number;
+    quorumPct: number;
+    timeRemaining: string | null;
+  }[];
+  parameters: {
+    name: string;
+    value: string;
+    range?: string;
+  }[];
+  stats: {
+    totalProposals: number;
+    passed: number;
+    rejected: number;
+    active: number;
+    totalVotesCast: number;
+  };
+}
+
+export interface StakingInfoResponse {
+  totalStaked: number;
+  totalStakedUsd: number;
+  currentApr: number;
+  userPosition: {
+    stakedAmount: number;
+    lockDurationDays: number;
+    multiplier: number;
+    effectiveStake: number;
+    pendingRewards: number;
+    pendingRewardsUsd: number;
+    unlockDate: string;
+  } | null;
+  rewardHistory: {
+    date: string;
+    amount: number;
+    token: string;
+    status: RewardStatus;
+  }[];
+  lockTiers: {
+    label: string;
+    days: number;
+    multiplier: number;
+  }[];
+}
+
+export interface PerformanceResponse {
+  daily: { date: string; value: number }[];
+  weekly: { date: string; value: number }[];
+  monthly: { date: string; value: number }[];
+  benchmarks: {
+    name: string;
+    returnPct: number;
+  }[];
+  totalReturn: number;
+  totalReturnPct: number;
 }

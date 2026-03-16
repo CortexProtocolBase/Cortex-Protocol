@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { mockVaultStats } from "@/lib/mock-data";
+import type { ApiResponse, VaultStatsResponse } from "@/lib/types";
 
-// GET /api/v1/vault/stats
-// Returns: totalAUM, sharePrice, totalDepositors, 24hVolume, performanceSinceInception, currentAllocation
 export async function GET() {
-  // TODO: Replace with Prisma query + Redis cache (other developer)
-  return NextResponse.json(mockVaultStats);
+  const response: ApiResponse<VaultStatsResponse> = {
+    data: mockVaultStats,
+    timestamp: new Date().toISOString(),
+  };
+  return NextResponse.json(response);
 }

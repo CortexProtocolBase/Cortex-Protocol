@@ -1,11 +1,26 @@
 import { NextResponse } from "next/server";
-import { mockAIInsights } from "@/lib/mock-data";
+import { mockAiInsights } from "@/lib/mock-data";
+import { getWalletFromHeaders } from "@/lib/token-gate";
+import type { ApiResponse, AiInsightsResponse } from "@/lib/types";
 
-// GET /api/v1/ai/insights
-// Returns: current AI analysis, sentiment scores, confidence level, next rebalance ETA
-// NOTE: This endpoint is token-gated in production (other developer will add auth middleware)
-export async function GET() {
-  // TODO: Add token-gating middleware — verify on-chain CORTEX balance >= tier threshold
-  // TODO: Replace with real AI agent state from Redis/DB (other developer)
-  return NextResponse.json(mockAIInsights);
+export async function GET(request: Request) {
+  const wallet = getWalletFromHeaders(request.headers);
+  if (!wallet) {
+    return NextResponse.json(
+      { error: "Missing or invalid x-wallet-address header" },
+      { status: 403 }
+    );
+  }
+
+  // TODO: uncomment when contracts are deployed
+  // const hasAccess = await hasTokenAccess(wallet);
+  // if (!hasAccess) {
+  //   return NextResponse.json({ error: "Insufficient CORTEX balance" }, { status: 403 });
+  // }
+
+  const response: ApiResponse<AiInsightsResponse> = {
+    data: mockAiInsights,
+    timestamp: new Date().toISOString(),
+  };
+  return NextResponse.json(response);
 }

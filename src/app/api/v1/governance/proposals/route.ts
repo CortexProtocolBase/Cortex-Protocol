@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
-import { mockProposals } from "@/lib/mock-data";
+import { mockGovernance } from "@/lib/mock-data";
+import type { ApiResponse, GovernanceResponse } from "@/lib/types";
 
-// GET /api/v1/governance/proposals?status=all
-// Returns: active and past proposals with vote tallies, status, execution state
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const statusFilter = searchParams.get("status") || "all";
-
-  // TODO: Replace with Prisma query + on-chain Governor reads (other developer)
-  let proposals = [...mockProposals];
-
-  if (statusFilter !== "all") {
-    proposals = proposals.filter((p) => p.status === statusFilter);
-  }
-
-  return NextResponse.json({ proposals });
+export async function GET() {
+  const response: ApiResponse<GovernanceResponse> = {
+    data: mockGovernance,
+    timestamp: new Date().toISOString(),
+  };
+  return NextResponse.json(response);
 }

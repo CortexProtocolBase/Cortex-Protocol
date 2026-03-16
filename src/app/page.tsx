@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Vote,
   Github,
+  ChevronDown,
 } from "lucide-react";
 
 /* ───────────────────────── Particle Network Background ───────────────────────── */
@@ -391,6 +392,70 @@ function AnimatedTerminal() {
   );
 }
 
+/* ───────────────────────── FAQ Section ───────────────────────── */
+
+const faqItems = [
+  {
+    q: "What is CORTEX?",
+    a: "CORTEX is a decentralized, AI-managed investment vault protocol built on Base. Users deposit ETH or USDC, and an autonomous AI agent manages the portfolio across the Base DeFi ecosystem.",
+  },
+  {
+    q: "How does the AI work?",
+    a: "The AI agent runs every 10 minutes, analyzing on-chain data, market sentiment, and liquidity flows. It generates trade proposals that are validated by smart contract guardrails before execution.",
+  },
+  {
+    q: "What are the fees?",
+    a: "2% annualized management fee on total AUM, 20% performance fee on net new profits (above high-water mark), and 0.5% withdrawal fee. Deposits are free.",
+  },
+  {
+    q: "What are cVault shares?",
+    a: "When you deposit, you receive cVault shares — an ERC-4626 receipt token proportional to your share of the vault. As the AI generates returns, your share value increases.",
+  },
+  {
+    q: "How is risk managed?",
+    a: "The AI allocates across three governance-controlled tiers: Core (70% default — ETH, cbBTC, USDC yields), Mid-Risk (20% — established Base tokens, Aerodrome pools), and Degen (10% — new launches, momentum plays). $CORTEX holders vote on these bands.",
+  },
+  {
+    q: "Can I withdraw anytime?",
+    a: "Yes. Redeem your cVault shares at any time for the underlying assets minus a 0.5% withdrawal fee. No lockups.",
+  },
+];
+
+function FaqSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  return (
+    <section className="py-20">
+      <div className="mx-auto max-w-5xl px-6">
+        <h2 className="reveal-left font-heading text-2xl font-bold tracking-tight text-foreground">
+          Frequently asked questions
+        </h2>
+
+        <div className="mt-10">
+          {faqItems.map((item, i) => (
+            <div key={i} className="border-b border-border">
+              <button
+                className="flex justify-between items-center w-full py-4 text-left text-foreground font-medium cursor-pointer"
+                onClick={() => setOpenIndex(openIndex === i ? null : i)}
+              >
+                {item.q}
+                <ChevronDown
+                  className={`h-5 w-5 text-muted transition-transform duration-300 ${
+                    openIndex === i ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {openIndex === i && (
+                <p className="text-muted text-sm pb-4">{item.a}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    PAGE COMPONENT
    ═══════════════════════════════════════════════════════════════ */
@@ -415,9 +480,7 @@ export default function Home() {
             </h1>
 
             <p className="mt-6 max-w-xl text-base text-muted leading-relaxed">
-              CORTEX is a vault protocol where an autonomous AI agent handles
-              your DeFi strategy — allocating across lending, LPs, staking, and
-              more. You deposit. It does the rest.
+              Deposit ETH or USDC into the CORTEX Vault on Base. An autonomous AI agent manages a mixed portfolio across the Base DeFi ecosystem — and distributes yield back to you.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -452,7 +515,7 @@ export default function Home() {
         <div className="mx-auto max-w-5xl px-6">
           <div className="reveal-scale grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border lg:grid-cols-4">
             {[
-              { value: "$12.4M", label: "locked in vault" },
+              { value: "$12.4M", label: "TVL on Base" },
               { value: "18.7%", label: "avg. APY" },
               { value: "12", label: "active strategies" },
               { value: "2,847", label: "depositors" },
@@ -484,19 +547,19 @@ export default function Home() {
                 n: "01",
                 icon: Wallet,
                 title: "Deposit ETH or USDC",
-                desc: "Connect a wallet, pick an amount, and deposit into the CORTEX vault. No lockups, no minimums — withdraw whenever you want.",
+                desc: "Connect a wallet, pick an amount, and deposit into the CORTEX vault on Base. You receive cVault shares proportional to your deposit. No lockups, no minimums.",
               },
               {
                 n: "02",
                 icon: Brain,
                 title: "AI builds your portfolio",
-                desc: "The agent scans 50+ protocols, weighs risk/reward, and spreads your capital across lending, LPs, options, and staking positions.",
+                desc: "The agent scans the Base DeFi ecosystem — Aave, Compound, Aerodrome, and more — weighs risk/reward, and spreads your capital across Core, Mid-Risk, and Degen tiers.",
               },
               {
                 n: "03",
                 icon: TrendingUp,
                 title: "Yield flows back to you",
-                desc: "Profits are distributed proportionally to your vault share. The AI keeps rebalancing — you just watch your balance grow.",
+                desc: "Profits are distributed proportionally to your cVault share value. A 2% management fee and 20% performance fee apply — the rest is yours. Withdraw anytime.",
               },
             ].map((step) => (
               <div
@@ -544,9 +607,9 @@ export default function Home() {
                 Autonomous AI Agent
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                Not a script — an actual decision-making agent that evaluates market
+                Not a script — an actual decision-making agent on Base that evaluates market
                 conditions, protocol risks, and yield opportunities before every
-                allocation. It runs continuously, not on a cron job.
+                allocation. It spreads capital across Core, Mid-Risk, and Degen tiers and runs every 10 minutes.
               </p>
             </div>
 
@@ -557,8 +620,8 @@ export default function Home() {
                 <h3 className="mt-3 font-heading text-sm font-semibold text-foreground">
                   Multi-Strategy
                 </h3>
-                <p className="mt-1 text-sm text-muted">
-                  Lending, LPs, options, staking — never all in one basket.
+              <p className="mt-1 text-sm text-muted">
+                  Lending, LPs, options, staking across Base — never all in one basket.
                 </p>
               </div>
               <div className="rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-border-hover">
@@ -589,13 +652,15 @@ export default function Home() {
                 Fee Sharing
               </h3>
               <p className="mt-1 text-sm text-muted">
-                Protocol fees go back to CORTEX stakers — 50% to stakers,
-                30% treasury, 20% development.
+                Protocol fees (2% management + 20% performance) go back to $CORTEX stakers — 50% to stakers, 50% to treasury.
               </p>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ─── FAQ ─── */}
+      <FaqSection />
 
       {/* ─── CTA ─── */}
       <section className="py-20">
@@ -639,7 +704,7 @@ export default function Home() {
           </nav>
 
           <p className="text-xs text-muted">
-            &copy; 2026 CORTEX
+            &copy; 2026 CORTEX &middot; Built on Base
           </p>
         </div>
       </footer>

@@ -26,7 +26,7 @@ import {
 const tokenStats = [
   { label: "CORTEX Price", value: "$3.47", icon: CircleDollarSign },
   { label: "Market Cap", value: "$34.7M", icon: TrendingUp },
-  { label: "Supply", value: "10M / 100M", icon: Coins },
+  { label: "Supply", value: "1B (Fixed)", icon: Coins },
   { label: "Your Balance", value: "1,247 CORTEX", icon: Wallet },
   { label: "Voting Power", value: "0.012%", icon: Vote },
 ];
@@ -45,7 +45,7 @@ interface Proposal {
 const proposals: Proposal[] = [
   {
     id: 1,
-    title: "Increase Max Risk Tolerance to 75%",
+    title: "Adjust Core Allocation Band to 60-85%",
     status: "Active",
     proposer: "0xAb3...7f2",
     forPct: 67,
@@ -55,7 +55,7 @@ const proposals: Proposal[] = [
   },
   {
     id: 2,
-    title: "Add Perpetuals Strategy",
+    title: "Whitelist DEGEN Token for Mid-Risk Tier",
     status: "Active",
     proposer: "0x7eF...1a9",
     forPct: 82,
@@ -65,7 +65,7 @@ const proposals: Proposal[] = [
   },
   {
     id: 3,
-    title: "Reduce Protocol Fee to 1.5%",
+    title: "Reduce Management Fee from 2% to 1.5%",
     status: "Passed",
     proposer: "0xCd1...4b8",
     forPct: 91,
@@ -76,17 +76,22 @@ const proposals: Proposal[] = [
 ];
 
 const parameters = [
-  { label: "Max Risk Level", value: "70%", icon: Gauge },
-  { label: "Protocol Fee", value: "2%", icon: Percent },
-  { label: "Rebalance Frequency", value: "6h", icon: RefreshCcw },
-  { label: "Max Allocation", value: "40%", icon: PieChart },
-  { label: "Emergency Fee", value: "0.5%", icon: AlertTriangle },
+  { label: "Core Allocation", value: "70%", range: "50-90%", icon: PieChart },
+  { label: "Mid-Risk Allocation", value: "20%", range: "5-35%", icon: PieChart },
+  { label: "Degen Allocation", value: "10%", range: "0-15%", icon: PieChart },
+  { label: "Max Slippage", value: "1.5%", range: "0.5-5%", icon: Gauge },
+  { label: "Management Fee", value: "2%", range: "0-4%", icon: Percent },
+  { label: "Performance Fee", value: "20%", range: "0-30%", icon: Percent },
+  { label: "Withdrawal Fee", value: "0.5%", range: "0-2%", icon: Percent },
+  { label: "AI Trade Rate Limit", value: "20/hour", range: "5-50", icon: RefreshCcw },
+  { label: "Proposal Quorum", value: "4%", range: "2-10%", icon: BarChart3 },
+  { label: "Voting Period", value: "3 days", range: "1-7 days", icon: Clock },
+  { label: "Timelock Delay", value: "24 hours", range: "6-72 hours", icon: ShieldCheck },
 ];
 
 const feeSlices = [
-  { label: "Stakers", pct: 50, color: "bg-primary" },
-  { label: "Treasury", pct: 30, color: "bg-primary/60" },
-  { label: "Dev", pct: 20, color: "bg-primary/30" },
+  { label: "CORTEX Stakers", pct: 50, color: "bg-primary" },
+  { label: "Treasury", pct: 50, color: "bg-primary/60" },
 ];
 
 const govStats = [
@@ -202,8 +207,31 @@ export default function GovernancePage() {
             ))}
           </section>
 
+          {/* ── Emergency Brake ── */}
+          <section className="mt-8">
+            <div className="bg-card border border-border rounded-2xl p-6 transition-all duration-300 hover:border-border-hover">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle size={18} className="text-muted" />
+                <h3 className="text-foreground font-heading text-base font-semibold">
+                  Emergency Brake
+                </h3>
+              </div>
+              <p className="text-muted text-sm mb-4">
+                Supermajority vote (66% of voting power) can pause the AI agent
+                and trigger full withdrawal to base assets (ETH/USDC). Bypasses
+                timelock.
+              </p>
+              <button
+                disabled
+                className="text-foreground bg-card-solid border border-border opacity-60 rounded-lg px-5 py-2 text-sm font-medium cursor-not-allowed"
+              >
+                Initiate Emergency Brake
+              </button>
+            </div>
+          </section>
+
           {/* ── Protocol Parameters ── */}
-          <section className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
             {parameters.map((param) => (
               <div
                 key={param.label}
@@ -213,12 +241,18 @@ export default function GovernancePage() {
                   <param.icon size={16} className="text-muted" />
                   <span className="text-muted text-sm">{param.label}</span>
                 </div>
-                <p className="text-foreground font-heading text-xl font-bold mb-3">
+                <p className="text-foreground font-heading text-xl font-bold mb-1">
                   {param.value}
+                </p>
+                <p className="text-muted text-xs mb-3">
+                  Range: {param.range}
                 </p>
                 <span className="cursor-pointer text-primary text-sm hover:underline">
                   Propose Change
                 </span>
+                <p className="text-muted text-xs mt-1">
+                  Min 100K $CORTEX required
+                </p>
               </div>
             ))}
           </section>

@@ -34,79 +34,100 @@ import {
 /* ------------------------------------------------------------------ */
 
 const allocationData = [
-  { name: "DeFi Lending", value: 35, color: "#3B82F6", amount: "$4.34M" },
-  { name: "DEX Liquidity", value: 25, color: "#2563EB", amount: "$3.10M" },
-  { name: "Options", value: 20, color: "#60A5FA", amount: "$2.48M" },
-  { name: "Staking", value: 15, color: "#93C5FD", amount: "$1.86M" },
-  { name: "Cash", value: 5, color: "#71717a", amount: "$0.62M" },
+  { name: "Core", value: 70, color: "#3B82F6", amount: "$8.68M", description: "WETH, cbBTC, USDC yields on Aave/Compound" },
+  { name: "Mid-Risk", value: 20, color: "#60A5FA", amount: "$2.48M", description: "Established Base tokens (AERO, DEGEN), Aerodrome pools" },
+  { name: "Degen", value: 10, color: "#93C5FD", amount: "$1.24M", description: "New Base launches, momentum plays" },
 ];
 
 const strategies = [
   {
-    name: "DeFi Lending",
+    name: "Aave USDC Yield",
+    tier: "Core",
     icon: Landmark,
-    allocation: 35,
-    apy: 12.4,
-    return30d: 3.2,
+    allocation: 25,
+    apy: 8.2,
+    return30d: 2.1,
     risk: "Low" as const,
   },
   {
-    name: "DEX LP",
+    name: "Compound ETH",
+    tier: "Core",
+    icon: Layers,
+    allocation: 20,
+    apy: 5.4,
+    return30d: 1.8,
+    risk: "Low" as const,
+  },
+  {
+    name: "cbBTC/WETH LP",
+    tier: "Core",
     icon: Droplets,
     allocation: 25,
+    apy: 12.1,
+    return30d: 3.4,
+    risk: "Low" as const,
+  },
+  {
+    name: "Aerodrome AERO/USDC",
+    tier: "Mid-Risk",
+    icon: BarChart3,
+    allocation: 12,
     apy: 24.8,
     return30d: 5.8,
     risk: "Medium" as const,
   },
   {
-    name: "Options",
-    icon: BarChart3,
-    allocation: 20,
+    name: "DEGEN/WETH Pool",
+    tier: "Mid-Risk",
+    icon: Droplets,
+    allocation: 8,
     apy: 31.2,
     return30d: -1.4,
+    risk: "Medium" as const,
+  },
+  {
+    name: "New Base Launch #47",
+    tier: "Degen",
+    icon: Zap,
+    allocation: 6,
+    apy: 0,
+    return30d: 12.3,
     risk: "High" as const,
   },
   {
-    name: "ETH Staking",
-    icon: Layers,
-    allocation: 15,
-    apy: 4.2,
-    return30d: 1.1,
-    risk: "Low" as const,
-  },
-  {
-    name: "Cash Reserve",
+    name: "Momentum Token XYZ",
+    tier: "Degen",
     icon: Banknote,
-    allocation: 5,
+    allocation: 4,
     apy: 0,
-    return30d: 0,
-    risk: "None" as const,
+    return30d: -3.1,
+    risk: "High" as const,
   },
 ];
 
 const decisionLog = [
   {
-    action: "Increased DeFi Lending allocation by 5%",
+    action: "Increased Aave USDC lending position by 3%",
     time: "2h ago",
     icon: ArrowUpRight,
   },
   {
-    action: "Reduced Options exposure due to volatility spike",
+    action: "Reduced Degen tier exposure after volatility spike",
     time: "6h ago",
     icon: ArrowDownRight,
   },
   {
-    action: "Rebalanced DEX LP positions across 3 pools",
+    action: "Rebalanced Aerodrome LP positions",
     time: "12h ago",
     icon: RefreshCw,
   },
   {
-    action: "Moved 3% to Cash Reserve as hedge",
+    action: "Moved 2% from Mid-Risk to Core as hedge",
     time: "1d ago",
     icon: ShieldCheck,
   },
   {
-    action: "Initiated new ETH staking position",
+    action: "Entered new cbBTC/WETH LP on Compound",
     time: "2d ago",
     icon: Zap,
   },
@@ -148,17 +169,18 @@ function PieTooltipContent({
   payload?: Array<{
     name: string;
     value: number;
-    payload: { amount: string };
+    payload: { amount: string; description: string };
   }>;
 }) {
   if (!active || !payload || !payload.length) return null;
   const d = payload[0];
   return (
-    <div className="bg-card-solid border border-border rounded-lg px-3 py-2">
+    <div className="bg-card-solid border border-border rounded-lg px-3 py-2 max-w-xs">
       <p className="text-sm font-medium text-foreground">{d.name}</p>
       <p className="text-xs text-muted">
         {d.value}% &middot; {d.payload.amount}
       </p>
+      <p className="text-xs text-muted mt-1">{d.payload.description}</p>
     </div>
   );
 }
@@ -178,14 +200,14 @@ export default function StrategyPage() {
         {/* ---- HEADER ---- */}
         <section>
           <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
-            AI Strategy Engine
+            AI Portfolio
           </h1>
           <p className="text-muted mt-2">
-            Autonomous portfolio allocation powered by CORTEX AI
+            Autonomous portfolio allocation across the Base DeFi ecosystem
           </p>
           <div className="flex items-center gap-2 mt-4">
             <span className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-sm text-muted">AI Agent Active</span>
+            <span className="text-sm text-muted">Running on Base</span>
           </div>
         </section>
 
@@ -239,7 +261,7 @@ export default function StrategyPage() {
               </span>
             </div>
             <p className="text-lg font-semibold text-foreground">
-              5<span className="text-muted">/8</span>
+              7<span className="text-muted">/7</span>
             </p>
           </div>
         </section>
@@ -312,7 +334,10 @@ export default function StrategyPage() {
                       className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="text-sm text-foreground">{item.name}</span>
+                    <div>
+                      <span className="text-sm text-foreground">{item.name}</span>
+                      <p className="text-xs text-muted">{item.description}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <span className="text-sm font-medium text-foreground">

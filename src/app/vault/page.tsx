@@ -40,7 +40,7 @@ const vaultStats = [
   { label: "Total Value Locked", value: "$12.4M" },
   { label: "Current APY", value: "18.7%" },
   { label: "Total Depositors", value: "2,847" },
-  { label: "24h Volume", value: "$1.2M" },
+  { label: "cVault Share Price", value: "$1.047" },
 ];
 
 function CustomTooltip({ active, payload, label }: any) {
@@ -82,11 +82,14 @@ export default function VaultPage() {
       <main className="mx-auto max-w-5xl px-6 pt-28 pb-20">
         {/* Header */}
         <section>
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
-            CORTEX Vault
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground">
+              CORTEX Vault
+            </h1>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-card-solid border border-border px-3 py-1 text-xs text-muted"><span className="w-1.5 h-1.5 rounded-full bg-primary" />Base</span>
+          </div>
           <p className="mt-2 font-body text-lg text-muted">
-            Deposit ETH or USDC and let AI optimize your returns
+            Deposit ETH or USDC on Base. Receive cVault shares. Let the AI manage the rest.
           </p>
         </section>
 
@@ -200,11 +203,28 @@ export default function VaultPage() {
                     {exchangeRate}
                   </span>
                 </div>
+                <div className="my-3 border-t border-border" />
+                <div className="flex items-center justify-between">
+                  <span className="font-body text-sm text-muted">Deposit Fee</span>
+                  <span className="font-body text-sm text-foreground">Free</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-body text-sm text-muted">Withdrawal Fee</span>
+                  <span className="font-body text-sm text-foreground">0.5%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-body text-sm text-muted">Management Fee</span>
+                  <span className="font-body text-sm text-foreground">2% annualized</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-body text-sm text-muted">Performance Fee</span>
+                  <span className="font-body text-sm text-foreground">20% of profits</span>
+                </div>
               </div>
 
               {/* Action Button */}
               <button className="w-full cursor-pointer rounded-xl bg-foreground py-4 font-heading font-bold text-background transition-all duration-300 hover:opacity-90">
-                {activeTab === "deposit" ? "Deposit" : "Withdraw"}
+                {activeTab === "deposit" ? "Deposit to Vault" : "Redeem cVault Shares"}
               </button>
             </div>
           </div>
@@ -237,6 +257,10 @@ export default function VaultPage() {
                 <div className="flex items-center justify-between border-b border-border py-3">
                   <span className="font-body text-sm text-muted">Vault Share</span>
                   <p className="font-heading text-sm text-foreground">0.034%</p>
+                </div>
+                <div className="flex items-center justify-between border-b border-border py-3">
+                  <span className="font-body text-sm text-muted">cVault Shares</span>
+                  <p className="font-heading text-sm text-foreground">2,389.5 cVLT</p>
                 </div>
                 <div className="flex items-center justify-between py-3">
                   <span className="font-body text-sm text-muted">Time in Vault</span>

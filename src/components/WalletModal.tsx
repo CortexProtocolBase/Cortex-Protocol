@@ -9,6 +9,33 @@ interface WalletModalProps {
   onClose: () => void;
 }
 
+function PhantomIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="512" height="512" rx="105" fill="#AB9FF2" />
+      <path
+        d="M9 402.313C9 458.146 37.7123 471 67.5731 471C130.74 471 178.211 413.56 206.541 368.171C203.095 378.212 201.181 388.254 201.181 397.895C201.181 424.405 215.729 443.284 244.441 443.284C283.872 443.284 325.984 407.133 347.805 368.171C346.274 373.794 345.508 379.016 345.508 383.836C345.508 402.313 355.462 413.962 375.752 413.962C439.684 413.962 504 295.467 504 191.834C504 111.097 464.951 40 366.947 40C194.673 40 9 260.119 9 402.313ZM307.608 182.997C307.608 162.913 318.327 148.855 334.023 148.855C349.336 148.855 360.056 162.913 360.056 182.997C360.056 203.081 349.336 217.541 334.023 217.541C318.327 217.541 307.608 203.081 307.608 182.997ZM389.534 182.997C389.534 162.913 400.253 148.855 415.949 148.855C431.262 148.855 441.981 162.913 441.981 182.997C441.981 203.081 431.262 217.541 415.949 217.541C400.253 217.541 389.534 203.081 389.534 182.997Z"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
+function CoinbaseIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="1024" height="1024" rx="200" fill="#0052FF" />
+      <circle cx="512" cy="512" r="350" fill="white" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M437 437C437 421.536 449.536 409 465 409H559C574.464 409 587 421.536 587 437V587C587 602.464 574.464 615 559 615H465C449.536 615 437 602.464 437 587V437Z"
+        fill="#0052FF"
+      />
+    </svg>
+  );
+}
+
 export default function WalletModal({ open, onClose }: WalletModalProps) {
   const { connect, connectors, isPending, error } = useConnect();
   const { isConnected } = useAccount();
@@ -69,27 +96,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
               disabled={isPending}
               className="cursor-pointer flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-border bg-white/[0.03] hover:bg-white/[0.06] transition-colors disabled:opacity-50"
             >
-              <svg width="24" height="24" viewBox="0 0 128 128" fill="none">
-                <rect width="128" height="128" rx="26" fill="#AB9FF2" />
-                <path
-                  d="M110.5 64.7C110.5 93.4 87.2 107.5 64 107.5C35.3 107.5 17.5 88.4 17.5 64C17.5 39.6 35.3 20.5 64 20.5C87.2 20.5 110.5 36 110.5 64.7Z"
-                  fill="url(#phantom-grad)"
-                />
-                <path
-                  d="M44.4 65.8C44.4 69.2 41.7 72 38.3 72C34.9 72 32.2 69.2 32.2 65.8C32.2 62.4 34.9 59.6 38.3 59.6C41.7 59.6 44.4 62.4 44.4 65.8Z"
-                  fill="white"
-                />
-                <path
-                  d="M66.4 65.8C66.4 69.2 63.7 72 60.3 72C56.9 72 54.2 69.2 54.2 65.8C54.2 62.4 56.9 59.6 60.3 59.6C63.7 59.6 66.4 62.4 66.4 65.8Z"
-                  fill="white"
-                />
-                <defs>
-                  <linearGradient id="phantom-grad" x1="64" y1="20.5" x2="64" y2="107.5">
-                    <stop stopColor="#534BB1" />
-                    <stop offset="1" stopColor="#551BF9" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <PhantomIcon />
               <span className="text-sm font-medium text-foreground">
                 {isPending ? "Connecting…" : "Phantom"}
               </span>
@@ -101,27 +108,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
               rel="noopener noreferrer"
               className="flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-border bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
             >
-              <svg width="24" height="24" viewBox="0 0 128 128" fill="none">
-                <rect width="128" height="128" rx="26" fill="#AB9FF2" />
-                <path
-                  d="M110.5 64.7C110.5 93.4 87.2 107.5 64 107.5C35.3 107.5 17.5 88.4 17.5 64C17.5 39.6 35.3 20.5 64 20.5C87.2 20.5 110.5 36 110.5 64.7Z"
-                  fill="url(#phantom-grad2)"
-                />
-                <path
-                  d="M44.4 65.8C44.4 69.2 41.7 72 38.3 72C34.9 72 32.2 69.2 32.2 65.8C32.2 62.4 34.9 59.6 38.3 59.6C41.7 59.6 44.4 62.4 44.4 65.8Z"
-                  fill="white"
-                />
-                <path
-                  d="M66.4 65.8C66.4 69.2 63.7 72 60.3 72C56.9 72 54.2 69.2 54.2 65.8C54.2 62.4 56.9 59.6 60.3 59.6C63.7 59.6 66.4 62.4 66.4 65.8Z"
-                  fill="white"
-                />
-                <defs>
-                  <linearGradient id="phantom-grad2" x1="64" y1="20.5" x2="64" y2="107.5">
-                    <stop stopColor="#534BB1" />
-                    <stop offset="1" stopColor="#551BF9" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <PhantomIcon />
               <span className="text-sm font-medium text-muted">
                 Install Phantom
               </span>
@@ -134,11 +121,7 @@ export default function WalletModal({ open, onClose }: WalletModalProps) {
             disabled={isPending}
             className="cursor-pointer flex items-center gap-3 w-full px-4 py-3 rounded-lg border border-border bg-white/[0.03] hover:bg-white/[0.06] transition-colors disabled:opacity-50"
           >
-            <svg width="24" height="24" viewBox="0 0 128 128" fill="none">
-              <rect width="128" height="128" rx="26" fill="#0052FF" />
-              <circle cx="64" cy="64" r="36" fill="white" />
-              <rect x="50" y="50" width="28" height="28" rx="4" fill="#0052FF" />
-            </svg>
+            <CoinbaseIcon />
             <span className="text-sm font-medium text-foreground">
               {isPending ? "Connecting…" : "Coinbase Wallet"}
             </span>

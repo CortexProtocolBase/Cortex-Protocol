@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
+import { showToast } from "@/components/Toast";
+import type { PortfolioResponse } from "@/lib/types";
+import type { LucideIcon } from "lucide-react";
 import {
   Brain,
   RefreshCw,
@@ -30,80 +33,26 @@ import {
 } from "recharts";
 
 /* ------------------------------------------------------------------ */
-/*  Data                                                               */
+/*  Static maps                                                        */
 /* ------------------------------------------------------------------ */
 
-const allocationData = [
-  { name: "Core", value: 70, color: "#3B82F6", amount: "$8.68M", description: "WETH, cbBTC, USDC yields on Aave/Compound" },
-  { name: "Mid-Risk", value: 20, color: "#60A5FA", amount: "$2.48M", description: "Established Base tokens (AERO, DEGEN), Aerodrome pools" },
-  { name: "Degen", value: 10, color: "#93C5FD", amount: "$1.24M", description: "New Base launches, momentum plays" },
-];
+const tierColors: Record<string, string> = {
+  Core: "#3B82F6",
+  "Mid-Risk": "#60A5FA",
+  Degen: "#93C5FD",
+};
 
-const strategies = [
-  {
-    name: "Aave USDC Yield",
-    tier: "Core",
-    icon: Landmark,
-    allocation: 25,
-    apy: 8.2,
-    return30d: 2.1,
-    risk: "Low" as const,
-  },
-  {
-    name: "Compound ETH",
-    tier: "Core",
-    icon: Layers,
-    allocation: 20,
-    apy: 5.4,
-    return30d: 1.8,
-    risk: "Low" as const,
-  },
-  {
-    name: "cbBTC/WETH LP",
-    tier: "Core",
-    icon: Droplets,
-    allocation: 25,
-    apy: 12.1,
-    return30d: 3.4,
-    risk: "Low" as const,
-  },
-  {
-    name: "Aerodrome AERO/USDC",
-    tier: "Mid-Risk",
-    icon: BarChart3,
-    allocation: 12,
-    apy: 24.8,
-    return30d: 5.8,
-    risk: "Medium" as const,
-  },
-  {
-    name: "DEGEN/WETH Pool",
-    tier: "Mid-Risk",
-    icon: Droplets,
-    allocation: 8,
-    apy: 31.2,
-    return30d: -1.4,
-    risk: "Medium" as const,
-  },
-  {
-    name: "New Base Launch #47",
-    tier: "Degen",
-    icon: Zap,
-    allocation: 6,
-    apy: 0,
-    return30d: 12.3,
-    risk: "High" as const,
-  },
-  {
-    name: "Momentum Token XYZ",
-    tier: "Degen",
-    icon: Banknote,
-    allocation: 4,
-    apy: 0,
-    return30d: -3.1,
-    risk: "High" as const,
-  },
-];
+const tierDescriptions: Record<string, string> = {
+  Core: "WETH, cbBTC, USDC yields on Aave/Compound",
+  "Mid-Risk": "Established Base tokens (AERO, DEGEN), Aerodrome pools",
+  Degen: "New Base launches, momentum plays",
+};
+
+const strategyIcons: Record<string, LucideIcon> = {
+  Aave: Landmark,
+  Compound: Layers,
+  Aerodrome: BarChart3,
+};
 
 const decisionLog = [
   {
@@ -131,13 +80,6 @@ const decisionLog = [
     time: "2d ago",
     icon: Zap,
   },
-];
-
-const riskMetrics = [
-  { label: "Sharpe Ratio", value: "2.4", icon: Award },
-  { label: "Max Drawdown", value: "-8.3%", icon: TrendingDown },
-  { label: "Volatility", value: "12.1%", icon: Activity },
-  { label: "Win Rate", value: "73%", icon: Target },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -191,6 +133,72 @@ function PieTooltipContent({
 
 export default function StrategyPage() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPortfolio() {
+      try {
+        const res = await fetch("/api/v1/portfolio");
+        if (!res.ok) throw new Error("Failed to fetch portfolio");
+        const json = await res.json();
+        setPortfolio(json.data as PortfolioResponse);
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to load portfolio data", "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPortfolio();
+  }, []);
+
+  /* Derived data --------------------------------------------------- */
+
+  const allocationData = (portfolio?.tiers ?? []).map((t) => ({
+    name: t.name,
+    value: t.allocationPct,
+    color: tierColors[t.name] ?? "#3B82F6",
+    amount: `$${(t.valueUsd / 1e6).toFixed(2)}M`,
+    description: tierDescriptions[t.name] ?? "",
+  }));
+
+  const totalValue = portfolio
+    ? `$${(portfolio.tiers.reduce((a, t) => a + t.valueUsd, 0) / 1e6).toFixed(1)}M`
+    : "--";
+
+  const strategies = (portfolio?.allocations ?? []).map((a) => ({
+    name: a.strategyName,
+    tier: a.tier,
+    icon: strategyIcons[a.protocol] ?? Zap,
+    allocation: a.allocationPct,
+    apy: a.apy,
+    return30d: a.return30d,
+    risk: a.riskLevel,
+    isActive: a.isActive,
+  }));
+
+  const riskMetrics = portfolio
+    ? [
+        { label: "Sharpe Ratio", value: String(portfolio.riskMetrics.sharpeRatio), icon: Award },
+        { label: "Max Drawdown", value: `${portfolio.riskMetrics.maxDrawdown}%`, icon: TrendingDown },
+        { label: "Volatility", value: `${portfolio.riskMetrics.volatility}%`, icon: Activity },
+        { label: "Win Rate", value: `${portfolio.riskMetrics.winRate}%`, icon: Target },
+      ]
+    : [
+        { label: "Sharpe Ratio", value: "--", icon: Award },
+        { label: "Max Drawdown", value: "--", icon: TrendingDown },
+        { label: "Volatility", value: "--", icon: Activity },
+        { label: "Win Rate", value: "--", icon: Target },
+      ];
+
+  const activeCount = strategies.filter((s) => s.isActive).length;
+
+  /* Skeleton pulse component --------------------------------------- */
+
+  const Skeleton = ({ className = "" }: { className?: string }) => (
+    <div className={`animate-pulse bg-border/40 rounded ${className}`} />
+  );
 
   return (
     <>
@@ -220,7 +228,13 @@ export default function StrategyPage() {
                 Last Rebalance
               </span>
             </div>
-            <p className="text-lg font-semibold text-foreground">2h ago</p>
+            {loading ? (
+              <Skeleton className="h-6 w-16" />
+            ) : (
+              <p className="text-lg font-semibold text-foreground">
+                {portfolio?.lastRebalance ?? "--"}
+              </p>
+            )}
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-5">
@@ -230,7 +244,13 @@ export default function StrategyPage() {
                 Next Rebalance
               </span>
             </div>
-            <p className="text-lg font-semibold text-foreground">~4h</p>
+            {loading ? (
+              <Skeleton className="h-6 w-16" />
+            ) : (
+              <p className="text-lg font-semibold text-foreground">
+                {portfolio?.nextRebalance ?? "--"}
+              </p>
+            )}
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-5">
@@ -240,7 +260,13 @@ export default function StrategyPage() {
                 Confidence
               </span>
             </div>
-            <p className="text-lg font-semibold text-foreground">87%</p>
+            {loading ? (
+              <Skeleton className="h-6 w-12" />
+            ) : (
+              <p className="text-lg font-semibold text-foreground">
+                {portfolio ? `${portfolio.confidence}%` : "--"}
+              </p>
+            )}
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-5">
@@ -250,7 +276,11 @@ export default function StrategyPage() {
                 Risk Level
               </span>
             </div>
-            <p className="text-lg font-semibold text-foreground">Moderate</p>
+            {loading ? (
+              <Skeleton className="h-6 w-20" />
+            ) : (
+              <p className="text-lg font-semibold text-foreground">Moderate</p>
+            )}
           </div>
 
           <div className="bg-card border border-border rounded-2xl p-5">
@@ -260,9 +290,14 @@ export default function StrategyPage() {
                 Active Strategies
               </span>
             </div>
-            <p className="text-lg font-semibold text-foreground">
-              7<span className="text-muted">/7</span>
-            </p>
+            {loading ? (
+              <Skeleton className="h-6 w-12" />
+            ) : (
+              <p className="text-lg font-semibold text-foreground">
+                {activeCount}
+                <span className="text-muted">/{strategies.length}</span>
+              </p>
+            )}
           </div>
         </section>
 
@@ -273,45 +308,51 @@ export default function StrategyPage() {
             <h2 className="font-heading text-lg font-semibold text-foreground mb-6">
               Portfolio Allocation
             </h2>
-            <div className="relative w-full flex justify-center">
-              <div className="w-64 h-64 sm:w-72 sm:h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={allocationData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius="58%"
-                      outerRadius="85%"
-                      paddingAngle={3}
-                      dataKey="value"
-                      stroke="none"
-                      onMouseEnter={(_, index) => setActiveIndex(index)}
-                      onMouseLeave={() => setActiveIndex(null)}
-                    >
-                      {allocationData.map((entry, index) => (
-                        <Cell
-                          key={entry.name}
-                          fill={entry.color}
-                          opacity={
-                            activeIndex === null || activeIndex === index
-                              ? 1
-                              : 0.4
-                          }
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<PieTooltipContent />} />
-                  </PieChart>
-                </ResponsiveContainer>
+            {loading ? (
+              <div className="flex justify-center">
+                <Skeleton className="w-64 h-64 sm:w-72 sm:h-72 rounded-full" />
               </div>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="font-heading text-2xl font-bold text-foreground">
-                  $12.4M
-                </span>
-                <span className="text-xs text-muted mt-1">Total Value</span>
+            ) : (
+              <div className="relative w-full flex justify-center">
+                <div className="w-64 h-64 sm:w-72 sm:h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={allocationData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius="58%"
+                        outerRadius="85%"
+                        paddingAngle={3}
+                        dataKey="value"
+                        stroke="none"
+                        onMouseEnter={(_, index) => setActiveIndex(index)}
+                        onMouseLeave={() => setActiveIndex(null)}
+                      >
+                        {allocationData.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={entry.color}
+                            opacity={
+                              activeIndex === null || activeIndex === index
+                                ? 1
+                                : 0.4
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<PieTooltipContent />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="font-heading text-2xl font-bold text-foreground">
+                    {totalValue}
+                  </span>
+                  <span className="text-xs text-muted mt-1">Total Value</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Legend */}
@@ -320,95 +361,119 @@ export default function StrategyPage() {
               Breakdown
             </h2>
             <div>
-              {allocationData.map((item, idx) => (
-                <div
-                  key={item.name}
-                  className={`flex items-center justify-between py-3 ${
-                    idx < allocationData.length - 1
-                      ? "border-b border-border"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <div>
-                      <span className="text-sm text-foreground">{item.name}</span>
-                      <p className="text-xs text-muted">{item.description}</p>
+              {loading
+                ? Array.from({ length: 3 }).map((_, idx) => (
+                    <div key={idx} className={`py-3 ${idx < 2 ? "border-b border-border" : ""}`}>
+                      <Skeleton className="h-10 w-full" />
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium text-foreground">
-                      {item.value}%
-                    </span>
-                    <span className="text-sm text-muted w-16 text-right">
-                      {item.amount}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                  ))
+                : allocationData.map((item, idx) => (
+                    <div
+                      key={item.name}
+                      className={`flex items-center justify-between py-3 ${
+                        idx < allocationData.length - 1
+                          ? "border-b border-border"
+                          : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <div>
+                          <span className="text-sm text-foreground">{item.name}</span>
+                          <p className="text-xs text-muted">{item.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm font-medium text-foreground">
+                          {item.value}%
+                        </span>
+                        <span className="text-sm text-muted w-16 text-right">
+                          {item.amount}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
             </div>
           </div>
         </section>
 
         {/* ---- STRATEGY CARDS ---- */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-          {strategies.map((s) => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.name}
-                className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover transition-all duration-300"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5 text-muted" />
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {s.name}
-                    </h3>
-                  </div>
+          {loading
+            ? Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="bg-card border border-border rounded-2xl p-6"
+                >
+                  <Skeleton className="h-5 w-3/4 mb-4" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-2/3" />
                 </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted">Allocation</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {s.allocation}%
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted">APY</span>
-                    <span className="text-sm font-medium text-primary">
-                      {s.apy > 0 ? `${s.apy}%` : "--"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted">30d Return</span>
-                    <span className="text-sm font-medium text-foreground">
-                      {s.return30d > 0 ? "+" : ""}
-                      {s.return30d}%
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-xs rounded-full px-2 py-0.5 ${riskBadge(
-                      s.risk
-                    )}`}
+              ))
+            : strategies.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <div
+                    key={s.name}
+                    className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover transition-all duration-300"
                   >
-                    {s.risk}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    <span className="text-xs text-muted">Active</span>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Icon className="w-5 h-5 text-muted" />
+                        <h3 className="text-sm font-semibold text-foreground">
+                          {s.name}
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted">Allocation</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {s.allocation}%
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted">APY</span>
+                        <span className="text-sm font-medium text-primary">
+                          {s.apy > 0 ? `${s.apy}%` : "--"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted">30d Return</span>
+                        <span className="text-sm font-medium text-foreground">
+                          {s.return30d > 0 ? "+" : ""}
+                          {s.return30d}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-xs rounded-full px-2 py-0.5 ${riskBadge(
+                          s.risk
+                        )}`}
+                      >
+                        {s.risk}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            s.isActive ? "bg-primary" : "bg-muted"
+                          }`}
+                        />
+                        <span className="text-xs text-muted">
+                          {s.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
         </section>
 
         {/* ---- AI DECISION LOG ---- */}
@@ -456,7 +521,11 @@ export default function StrategyPage() {
                     {m.label}
                   </span>
                 </div>
-                <p className="text-xl font-bold text-foreground">{m.value}</p>
+                {loading ? (
+                  <Skeleton className="h-7 w-16" />
+                ) : (
+                  <p className="text-xl font-bold text-foreground">{m.value}</p>
+                )}
               </div>
             );
           })}

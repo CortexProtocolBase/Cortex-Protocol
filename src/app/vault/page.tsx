@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
+import { useAccount } from "wagmi";
+import { showToast } from "@/components/Toast";
+import type {
+  VaultStatsResponse,
+  UserPositionResponse,
+  PerformanceResponse,
+} from "@/lib/types";
 import {
   AreaChart,
   Area,
@@ -11,37 +18,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const performanceData = [
-  { month: "Mar", tvl: 3.2 },
-  { month: "Apr", tvl: 4.1 },
-  { month: "May", tvl: 5.8 },
-  { month: "Jun", tvl: 5.3 },
-  { month: "Jul", tvl: 7.1 },
-  { month: "Aug", tvl: 8.4 },
-  { month: "Sep", tvl: 7.9 },
-  { month: "Oct", tvl: 9.2 },
-  { month: "Nov", tvl: 10.1 },
-  { month: "Dec", tvl: 9.8 },
-  { month: "Jan", tvl: 11.3 },
-  { month: "Feb", tvl: 12.4 },
-];
-
-const recentTransactions = [
-  { type: "Deposit", amount: "1.5 ETH", share: "0.012%", date: "2026-03-15" },
-  { type: "Deposit", amount: "3,200 USDC", share: "0.026%", date: "2026-03-14" },
-  { type: "Withdraw", amount: "0.8 ETH", share: "0.006%", date: "2026-03-13" },
-  { type: "Deposit", amount: "5,000 USDC", share: "0.040%", date: "2026-03-12" },
-  { type: "Withdraw", amount: "2.1 ETH", share: "0.017%", date: "2026-03-11" },
-  { type: "Deposit", amount: "1,750 USDC", share: "0.014%", date: "2026-03-10" },
-];
-
-const vaultStats = [
-  { label: "Total Value Locked", value: "$12.4M" },
-  { label: "Current APY", value: "18.7%" },
-  { label: "Total Depositors", value: "2,847" },
-  { label: "cVault Share Price", value: "$1.047" },
-];
 
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
@@ -61,6 +37,45 @@ export default function VaultPage() {
   const [activeTab, setActiveTab] = useState<"deposit" | "withdraw">("deposit");
   const [selectedToken, setSelectedToken] = useState<"ETH" | "USDC">("ETH");
   const [amount, setAmount] = useState("");
+  const { address } = useAccount();
+
+  const [vaultStats, setVaultStats] = useState<VaultStatsResponse | null>(null);
+  const [userPosition, setUserPosition] = useState<UserPositionResponse | null>(null);
+  const [performance, setPerformance] = useState<PerformanceResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [statsRes, perfRes] = await Promise.all([
+          fetch("/api/v1/vault/stats"),
+          fetch("/api/v1/performance"),
+        ]);
+        const [statsJson, perfJson] = await Promise.all([
+          statsRes.json(),
+          perfRes.json(),
+        ]);
+        setVaultStats(statsJson.data);
+        setPerformance(perfJson.data);
+      } catch {
+        showToast("Failed to load vault data", "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!address) {
+      setUserPosition(null);
+      return;
+    }
+    fetch(`/api/v1/vault/user/${address}`)
+      .then((r) => r.json())
+      .then((json) => setUserPosition(json.data))
+      .catch(() => showToast("Failed to load position", "error"));
+  }, [address]);
 
   const balance = selectedToken === "ETH" ? "4.23" : "8,412.50";
   const exchangeRate =
@@ -74,6 +89,51 @@ export default function VaultPage() {
         ? (parseFloat(amount) * 0.0135).toFixed(3)
         : (parseFloat(amount.replace(/,/g, "")) * 0.0000081).toFixed(6)
       : "0";
+
+  const computedVaultStats = [
+    {
+      label: "Total Value Locked",
+      value: loading ? "\u2014" : `$${(vaultStats?.tvl ?? 0).toLocaleString()}`,
+    },
+    {
+      label: "Current APY",
+      value: loading ? "\u2014" : `${(vaultStats?.apy7d ?? 0).toFixed(1)}%`,
+    },
+    {
+      label: "Total Depositors",
+      value: loading ? "\u2014" : (vaultStats?.depositors ?? 0).toLocaleString(),
+    },
+    {
+      label: "cVault Share Price",
+      value: loading ? "\u2014" : `$${(vaultStats?.sharePriceUsd ?? 0).toFixed(3)}`,
+    },
+  ];
+
+  const performanceData = (performance?.monthly ?? []).map((d) => ({
+    month: new Date(d.date).toLocaleString("default", { month: "short" }),
+    tvl: d.value,
+  }));
+
+  const recentTransactions = (userPosition?.recentTransactions ?? []).map((tx) => ({
+    type: tx.type,
+    amount: `${tx.amount.toLocaleString()} USDC`,
+    share: `${tx.share.toFixed(3)}%`,
+    date: tx.date,
+  }));
+
+  const depositedAmount = userPosition?.depositedAmount ?? 0;
+  const currentValue = userPosition?.currentValue ?? 0;
+  const profitLoss = userPosition?.profitLoss ?? 0;
+  const profitLossPct = userPosition?.profitLossPct ?? 0;
+  const cvaultShares = userPosition?.cvaultShares ?? 0;
+  const vaultSharePct = userPosition?.vaultSharePct ?? 0;
+  const entryDate = userPosition?.entryDate ?? null;
+
+  const daysInVault = entryDate
+    ? Math.floor((Date.now() - new Date(entryDate).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+
+  const hasPosition = !!userPosition;
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,7 +155,7 @@ export default function VaultPage() {
 
         {/* Vault Stats */}
         <section className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {vaultStats.map((stat) => (
+          {computedVaultStats.map((stat) => (
             <div
               key={stat.label}
               className="rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:border-border-hover"
@@ -239,32 +299,48 @@ export default function VaultPage() {
                 <div className="flex items-center justify-between border-b border-border py-3">
                   <span className="font-body text-sm text-muted">Deposited</span>
                   <div className="text-right">
-                    <p className="font-heading text-sm text-foreground">2.5 ETH</p>
-                    <p className="font-body text-xs text-muted">$4,875.00</p>
+                    <p className="font-heading text-sm text-foreground">
+                      {hasPosition ? `${depositedAmount.toLocaleString()} USDC` : "\u2014"}
+                    </p>
+                    <p className="font-body text-xs text-muted">
+                      {hasPosition ? `$${depositedAmount.toLocaleString()}` : ""}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-b border-border py-3">
                   <span className="font-body text-sm text-muted">Current Value</span>
-                  <p className="font-heading text-sm text-foreground">$5,247.82</p>
+                  <p className="font-heading text-sm text-foreground">
+                    {hasPosition ? `$${currentValue.toLocaleString()}` : "\u2014"}
+                  </p>
                 </div>
                 <div className="flex items-center justify-between border-b border-border py-3">
                   <span className="font-body text-sm text-muted">Profit / Loss</span>
                   <div className="text-right">
-                    <p className="font-heading text-sm text-primary">+$372.82</p>
-                    <p className="font-body text-xs text-primary">+7.6%</p>
+                    <p className={`font-heading text-sm ${profitLoss >= 0 ? "text-primary" : "text-red-400"}`}>
+                      {hasPosition ? `${profitLoss >= 0 ? "+" : ""}$${profitLoss.toLocaleString()}` : "\u2014"}
+                    </p>
+                    <p className={`font-body text-xs ${profitLossPct >= 0 ? "text-primary" : "text-red-400"}`}>
+                      {hasPosition ? `${profitLossPct >= 0 ? "+" : ""}${profitLossPct.toFixed(1)}%` : ""}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between border-b border-border py-3">
                   <span className="font-body text-sm text-muted">Vault Share</span>
-                  <p className="font-heading text-sm text-foreground">0.034%</p>
+                  <p className="font-heading text-sm text-foreground">
+                    {hasPosition ? `${vaultSharePct.toFixed(3)}%` : "\u2014"}
+                  </p>
                 </div>
                 <div className="flex items-center justify-between border-b border-border py-3">
                   <span className="font-body text-sm text-muted">cVault Shares</span>
-                  <p className="font-heading text-sm text-foreground">2,389.5 cVLT</p>
+                  <p className="font-heading text-sm text-foreground">
+                    {hasPosition ? `${cvaultShares.toLocaleString()} cVLT` : "\u2014"}
+                  </p>
                 </div>
                 <div className="flex items-center justify-between py-3">
                   <span className="font-body text-sm text-muted">Time in Vault</span>
-                  <p className="font-heading text-sm text-foreground">47 days</p>
+                  <p className="font-heading text-sm text-foreground">
+                    {hasPosition ? `${daysInVault} days` : "\u2014"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -278,50 +354,56 @@ export default function VaultPage() {
               Vault Performance
             </h2>
             <div className="h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={performanceData}>
-                  <defs>
-                    <linearGradient id="tvlGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#27272a"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="month"
-                    stroke="#a1a1aa"
-                    tick={{ fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    stroke="#a1a1aa"
-                    tick={{ fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(val) => `$${val}M`}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="tvl"
-                    stroke="#3B82F6"
-                    strokeWidth={2}
-                    fill="url(#tvlGradient)"
-                    dot={false}
-                    activeDot={{
-                      r: 4,
-                      fill: "#3B82F6",
-                      stroke: "#09090b",
-                      strokeWidth: 2,
-                    }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {performanceData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={performanceData}>
+                    <defs>
+                      <linearGradient id="tvlGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#27272a"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="month"
+                      stroke="#a1a1aa"
+                      tick={{ fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      stroke="#a1a1aa"
+                      tick={{ fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(val) => `$${val}M`}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="tvl"
+                      stroke="#3B82F6"
+                      strokeWidth={2}
+                      fill="url(#tvlGradient)"
+                      dot={false}
+                      activeDot={{
+                        r: 4,
+                        fill: "#3B82F6",
+                        stroke: "#09090b",
+                        strokeWidth: 2,
+                      }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted text-sm">
+                  {loading ? "Loading chart\u2026" : "No performance data"}
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -351,6 +433,13 @@ export default function VaultPage() {
                   </tr>
                 </thead>
                 <tbody>
+                  {recentTransactions.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-4 font-body text-sm text-muted text-center">
+                        {address ? "No recent transactions" : "Connect wallet to view transactions"}
+                      </td>
+                    </tr>
+                  )}
                   {recentTransactions.map((tx, i) => (
                     <tr
                       key={i}

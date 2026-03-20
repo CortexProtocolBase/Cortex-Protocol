@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import type { VaultStatsResponse } from "@/lib/types";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import {
@@ -462,6 +463,29 @@ function FaqSection() {
 export default function Home() {
   useScrollReveal();
 
+  const [vaultStats, setVaultStats] = useState<VaultStatsResponse | null>(null);
+
+  useEffect(() => {
+    fetch("/api/v1/vault/stats")
+      .then((res) => res.json())
+      .then((json) => setVaultStats(json.data))
+      .catch(() => {});
+  }, []);
+
+  const stats = vaultStats
+    ? [
+        { value: `$${(vaultStats.tvl / 1e6).toFixed(1)}M`, label: "TVL on Base" },
+        { value: `${vaultStats.apy7d.toFixed(1)}%`, label: "avg. APY" },
+        { value: "12", label: "active strategies" },
+        { value: vaultStats.depositors.toLocaleString(), label: "depositors" },
+      ]
+    : [
+        { value: "$—", label: "TVL on Base" },
+        { value: "—%", label: "avg. APY" },
+        { value: "12", label: "active strategies" },
+        { value: "—", label: "depositors" },
+      ];
+
   return (
     <div className="relative min-h-screen bg-background text-foreground font-body">
       <ParticleNetwork />
@@ -515,12 +539,7 @@ export default function Home() {
       <section className="py-16">
         <div className="mx-auto max-w-5xl px-6">
           <div className="reveal-scale grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-border lg:grid-cols-4">
-            {[
-              { value: "$12.4M", label: "TVL on Base" },
-              { value: "18.7%", label: "avg. APY" },
-              { value: "12", label: "active strategies" },
-              { value: "2,847", label: "depositors" },
-            ].map((stat) => (
+            {stats.map((stat) => (
               <div
                 key={stat.label}
                 className="bg-card p-6 lg:p-8"

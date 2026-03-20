@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import WalletProvider from "@/providers/WalletProvider";
 import RealtimeProvider from "@/providers/RealtimeProvider";
+import ToastContainer from "@/components/Toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className="bg-background text-foreground font-body antialiased">
         <WalletProvider>
           <RealtimeProvider>{children}</RealtimeProvider>
+          <ToastContainer />
         </WalletProvider>
       </body>
     </html>

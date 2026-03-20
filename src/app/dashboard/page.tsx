@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Copy } from "lucide-react";
 import { useAccount } from "wagmi";
+import { showToast } from "@/components/Toast";
+import type {
+  VaultStatsResponse,
+  UserPositionResponse,
+  PortfolioResponse,
+  PerformanceResponse,
+} from "@/lib/types";
 import {
   AreaChart,
   Area,
@@ -14,67 +21,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-/* ------------------------------------------------------------------ */
-/*  Mock data                                                          */
-/* ------------------------------------------------------------------ */
-
-const performanceData = [
-  { month: "Apr", value: 15200 },
-  { month: "May", value: 16800 },
-  { month: "Jun", value: 16100 },
-  { month: "Jul", value: 17400 },
-  { month: "Aug", value: 18900 },
-  { month: "Sep", value: 18200 },
-  { month: "Oct", value: 19800 },
-  { month: "Nov", value: 21300 },
-  { month: "Dec", value: 20700 },
-  { month: "Jan", value: 22100 },
-  { month: "Feb", value: 23400 },
-  { month: "Mar", value: 24531 },
-];
-
 const timeFilters = ["1W", "1M", "3M", "6M", "1Y", "ALL"] as const;
-
-const recentActivity = [
-  {
-    type: "Deposit",
-    amount: "+2,500.00 USDC",
-    date: "Mar 15, 2026",
-    status: "Completed" as const,
-  },
-  {
-    type: "Yield",
-    amount: "+127.43 USDC",
-    date: "Mar 14, 2026",
-    status: "Completed" as const,
-  },
-  {
-    type: "Withdraw",
-    amount: "-1,000.00 USDC",
-    date: "Mar 12, 2026",
-    status: "Completed" as const,
-  },
-  {
-    type: "Deposit",
-    amount: "+5,000.00 USDC",
-    date: "Mar 10, 2026",
-    status: "Completed" as const,
-  },
-  {
-    type: "Yield",
-    amount: "+98.12 USDC",
-    date: "Mar 9, 2026",
-    status: "Pending" as const,
-  },
-];
-
-const allocations = [
-  { label: "DeFi Lending", pct: 35, opacity: 1 },
-  { label: "DEX LP", pct: 25, opacity: 0.8 },
-  { label: "Options", pct: 20, opacity: 0.6 },
-  { label: "Staking", pct: 15, opacity: 0.4 },
-  { label: "Cash", pct: 5, opacity: 0.2 },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Custom Recharts tooltip                                            */
@@ -109,6 +56,48 @@ export default function DashboardPage() {
   const [copied, setCopied] = useState(false);
   const { address } = useAccount();
 
+  const [vaultStats, setVaultStats] = useState<VaultStatsResponse | null>(null);
+  const [userPosition, setUserPosition] = useState<UserPositionResponse | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioResponse | null>(null);
+  const [performance, setPerformance] = useState<PerformanceResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [statsRes, portfolioRes, perfRes] = await Promise.all([
+          fetch("/api/v1/vault/stats"),
+          fetch("/api/v1/portfolio"),
+          fetch("/api/v1/performance"),
+        ]);
+        const [statsJson, portfolioJson, perfJson] = await Promise.all([
+          statsRes.json(),
+          portfolioRes.json(),
+          perfRes.json(),
+        ]);
+        setVaultStats(statsJson.data);
+        setPortfolio(portfolioJson.data);
+        setPerformance(perfJson.data);
+      } catch {
+        showToast("Failed to load dashboard data", "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (!address) {
+      setUserPosition(null);
+      return;
+    }
+    fetch(`/api/v1/vault/user/${address}`)
+      .then((r) => r.json())
+      .then((json) => setUserPosition(json.data))
+      .catch(() => showToast("Failed to load position", "error"));
+  }, [address]);
+
   const displayAddress = address
     ? `${address.slice(0, 6)}…${address.slice(-4)}`
     : "Not Connected";
@@ -117,8 +106,34 @@ export default function DashboardPage() {
     if (!address) return;
     navigator.clipboard.writeText(address);
     setCopied(true);
+    showToast("Copied address");
     setTimeout(() => setCopied(false), 1500);
   };
+
+  const currentValue = userPosition?.currentValue ?? 0;
+  const profitLoss = userPosition?.profitLoss ?? 0;
+  const profitLossPct = userPosition?.profitLossPct ?? 0;
+  const vaultSharePct = userPosition?.vaultSharePct ?? 0;
+  const apy = vaultStats?.apy7d ?? 0;
+
+  const chartData = (performance?.monthly ?? []).map((d) => ({
+    month: new Date(d.date).toLocaleString("default", { month: "short" }),
+    value: d.value,
+  }));
+
+  const tierOpacities: Record<string, number> = { Core: 1, "Mid-Risk": 0.7, Degen: 0.4 };
+  const allocations = (portfolio?.tiers ?? []).map((t) => ({
+    label: t.name,
+    pct: t.allocationPct,
+    opacity: tierOpacities[t.name] ?? 0.5,
+  }));
+
+  const recentTxs = (userPosition?.recentTransactions ?? []).map((tx) => ({
+    type: tx.type,
+    amount: `${tx.type === "Withdraw" ? "-" : "+"}${tx.amount.toLocaleString()} USDC`,
+    date: new Date(tx.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    status: "Completed" as const,
+  }));
 
   return (
     <>
@@ -143,34 +158,42 @@ export default function DashboardPage() {
 
         {/* ----- Portfolio Overview Cards ----- */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-          {/* Total Balance */}
           <div className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover hover:bg-card-hover transition-all duration-300">
             <p className="text-muted text-sm mb-1">Total Balance</p>
-            <p className="font-heading text-2xl font-bold">$24,531.82</p>
-            <span className="text-primary text-sm mt-1 inline-block">
-              +12.4%
-            </span>
+            <p className="font-heading text-2xl font-bold">
+              {loading ? "—" : `$${currentValue.toLocaleString()}`}
+            </p>
+            {profitLossPct > 0 && (
+              <span className="text-primary text-sm mt-1 inline-block">
+                +{profitLossPct.toFixed(1)}%
+              </span>
+            )}
           </div>
 
-          {/* Vault Share */}
           <div className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover hover:bg-card-hover transition-all duration-300">
             <p className="text-muted text-sm mb-1">Vault Share</p>
-            <p className="font-heading text-2xl font-bold">0.34%</p>
+            <p className="font-heading text-2xl font-bold">
+              {loading ? "—" : `${vaultSharePct.toFixed(2)}%`}
+            </p>
           </div>
 
-          {/* Total Profit */}
           <div className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover hover:bg-card-hover transition-all duration-300">
             <p className="text-muted text-sm mb-1">Total Profit</p>
-            <p className="font-heading text-2xl font-bold">+$2,847.23</p>
-            <span className="text-primary text-sm mt-1 inline-block">
-              +18.7%
-            </span>
+            <p className="font-heading text-2xl font-bold">
+              {loading ? "—" : `${profitLoss >= 0 ? "+" : ""}$${profitLoss.toLocaleString()}`}
+            </p>
+            {profitLossPct !== 0 && (
+              <span className={`text-sm mt-1 inline-block ${profitLossPct >= 0 ? "text-primary" : "text-red-400"}`}>
+                {profitLossPct >= 0 ? "+" : ""}{profitLossPct.toFixed(1)}%
+              </span>
+            )}
           </div>
 
-          {/* Current APY */}
           <div className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover hover:bg-card-hover transition-all duration-300">
             <p className="text-muted text-sm mb-1">Current APY</p>
-            <p className="font-heading text-2xl font-bold">18.7%</p>
+            <p className="font-heading text-2xl font-bold">
+              {loading ? "—" : `${apy.toFixed(1)}%`}
+            </p>
           </div>
         </div>
 
@@ -199,55 +222,53 @@ export default function DashboardPage() {
           </div>
 
           <div className="w-full h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={performanceData}>
-                <defs>
-                  <linearGradient
-                    id="blueGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="0%"
-                      stopColor="#3B82F6"
-                      stopOpacity={0.15}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="#3B82F6"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="#27272a"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fill: "#a1a1aa", fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: "#a1a1aa", fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  fill="url(#blueGradient)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient
+                      id="blueGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#27272a"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: "#a1a1aa", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#3B82F6"
+                    strokeWidth={2}
+                    fill="url(#blueGradient)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted text-sm">
+                {loading ? "Loading chart…" : "No performance data"}
+              </div>
+            )}
           </div>
         </div>
 
@@ -260,7 +281,12 @@ export default function DashboardPage() {
             </h2>
 
             <div>
-              {recentActivity.map((tx, i) => (
+              {recentTxs.length === 0 && (
+                <p className="text-muted text-sm py-3">
+                  {address ? "No recent transactions" : "Connect wallet to view activity"}
+                </p>
+              )}
+              {recentTxs.map((tx, i) => (
                 <div
                   key={i}
                   className="flex items-center justify-between py-3 border-b border-border last:border-b-0 hover:bg-card-hover transition-colors duration-150"
@@ -278,13 +304,7 @@ export default function DashboardPage() {
                     <span className="text-sm text-muted hidden sm:block">
                       {tx.date}
                     </span>
-                    <span
-                      className={`text-xs rounded-full px-2 py-0.5 ${
-                        tx.status === "Completed"
-                          ? "text-primary bg-primary/10"
-                          : "text-muted bg-card-solid"
-                      }`}
-                    >
+                    <span className="text-xs rounded-full px-2 py-0.5 text-primary bg-primary/10">
                       {tx.status}
                     </span>
                   </div>
@@ -298,6 +318,9 @@ export default function DashboardPage() {
             <h2 className="font-heading font-semibold mb-4">Allocation</h2>
 
             <div className="space-y-4">
+              {allocations.length === 0 && (
+                <p className="text-muted text-sm">{loading ? "Loading…" : "No allocation data"}</p>
+              )}
               {allocations.map((a) => (
                 <div key={a.label}>
                   <div className="flex items-center justify-between mb-1.5">

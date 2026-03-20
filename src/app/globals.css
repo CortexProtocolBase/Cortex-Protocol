@@ -89,6 +89,12 @@ body {
   100% { transform: translateY(-50%); }
 }
 
+/* Toast slide-up */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

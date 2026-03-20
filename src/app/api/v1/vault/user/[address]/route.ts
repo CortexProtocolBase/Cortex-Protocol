@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 import { mockUserPosition } from "@/lib/mock-data";
 import type { ApiResponse, UserPositionResponse } from "@/lib/types";
 
@@ -12,9 +13,90 @@ export async function GET(
     return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
   }
 
-  const response: ApiResponse<UserPositionResponse> = {
-    data: { ...mockUserPosition, walletAddress: address },
-    timestamp: new Date().toISOString(),
-  };
-  return NextResponse.json(response);
+  try {
+    // Get user position
+    const { data: position, error: posError } = await supabase
+      .from("user_positions")
+      .select("*")
+      .eq("wallet_address", address)
+      .single();
+
+    if (posError || !position) throw posError;
+
+    // Get latest vault snapshot for share price
+    const { data: snapshot } = await supabase
+      .from("vault_snapshots")
+      .select("share_price, total_shares")
+      .order("timestamp", { ascending: false })
+      .limit(1)
+      .single();
+
+    const sharePrice = snapshot?.share_price ?? 1;
+    const totalShares = snapshot?.total_shares ?? 1;
+    const currentValue = position.shares * sharePrice;
+    const profitLoss = currentValue - position.deposited_value;
+    const profitLossPct = position.deposited_value > 0
+      ? (profitLoss / position.deposited_value) * 100
+      : 0;
+    const vaultSharePct = totalShares > 0
+      ? (position.shares / totalShares) * 100
+      : 0;
+
+    // Get recent deposits and withdrawals
+    const [{ data: deposits }, { data: withdrawals }] = await Promise.all([
+      supabase
+        .from("deposits")
+        .select("*")
+        .eq("wallet_address", address)
+        .order("timestamp", { ascending: false })
+        .limit(5),
+      supabase
+        .from("withdrawals")
+        .select("*")
+        .eq("wallet_address", address)
+        .order("timestamp", { ascending: false })
+        .limit(5),
+    ]);
+
+    const recentTransactions = [
+      ...(deposits ?? []).map((d) => ({
+        type: "Deposit",
+        amount: Number(d.amount),
+        share: Number(d.shares_received),
+        date: d.timestamp,
+      })),
+      ...(withdrawals ?? []).map((w) => ({
+        type: "Withdraw",
+        amount: Number(w.assets_received),
+        share: Number(w.shares_burned),
+        date: w.timestamp,
+      })),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const data: UserPositionResponse = {
+      walletAddress: address,
+      depositedAmount: Number(position.deposited_value),
+      currentValue: Math.round(currentValue * 100) / 100,
+      profitLoss: Math.round(profitLoss * 100) / 100,
+      profitLossPct: Math.round(profitLossPct * 100) / 100,
+      cvaultShares: Number(position.shares),
+      vaultSharePct: Math.round(vaultSharePct * 100) / 100,
+      entryDate: position.last_updated,
+      recentTransactions,
+    };
+
+    const response: ApiResponse<UserPositionResponse> = {
+      data,
+      timestamp: new Date().toISOString(),
+    };
+    return NextResponse.json(response);
+  } catch {
+    // Fallback to mock data
+    const response: ApiResponse<UserPositionResponse> = {
+      data: { ...mockUserPosition, walletAddress: address },
+      timestamp: new Date().toISOString(),
+      cached: true,
+    };
+    return NextResponse.json(response);
+  }
 }

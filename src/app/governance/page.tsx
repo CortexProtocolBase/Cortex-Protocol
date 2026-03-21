@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAccount } from "wagmi";
+import { formatUnits } from "viem";
 import Navbar from "@/components/Navbar";
 import { showToast } from "@/components/Toast";
 import type { GovernanceResponse } from "@/lib/types";
+import { useCastVote, useDelegate, useVotingPower } from "@/hooks/useGovernance";
+import { useCortexBalance } from "@/hooks/useStaking";
 import {
   Vote,
   Coins,
@@ -59,8 +63,17 @@ function formatMarketCap(value: number): string {
 /* ───────── Page ───────── */
 
 export default function GovernancePage() {
+  const { address } = useAccount();
   const [data, setData] = useState<GovernanceResponse | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const { castVote, isPending: isVoting, isSuccess: voteSuccess } = useCastVote();
+  const { data: cortexBalance } = useCortexBalance(address);
+  const { data: votingPower } = useVotingPower(address);
+
+  useEffect(() => {
+    if (voteSuccess) showToast("Vote cast successfully!", "success");
+  }, [voteSuccess]);
 
   useEffect(() => {
     async function fetchGovernance() {
@@ -86,8 +99,8 @@ export default function GovernancePage() {
         { label: "CORTEX Price", value: `$${data.tokenPrice}`, icon: CircleDollarSign },
         { label: "Market Cap", value: formatMarketCap(data.marketCap), icon: TrendingUp },
         { label: "Supply", value: `${(data.totalSupply / 1e9).toFixed(0)}B (Fixed)`, icon: Coins },
-        { label: "Your Balance", value: "1,247 CORTEX", icon: Wallet },
-        { label: "Voting Power", value: "0.012%", icon: Vote },
+        { label: "Your Balance", value: cortexBalance ? `${parseFloat(formatUnits(cortexBalance as bigint, 18)).toLocaleString()} CORTEX` : "-- CORTEX", icon: Wallet },
+        { label: "Voting Power", value: votingPower ? `${(parseFloat(formatUnits(votingPower as bigint, 18)) / 1e7).toFixed(4)}%` : "--", icon: Vote },
       ]
     : [];
 
@@ -221,11 +234,19 @@ export default function GovernancePage() {
 
                       {p.status === "Active" && (
                         <div className="flex items-center gap-2">
-                          <button className="cursor-pointer bg-foreground text-background rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:opacity-90">
-                            For
+                          <button
+                            onClick={() => { if (!address) { showToast("Connect wallet to vote", "error"); return; } castVote(BigInt(p.id.replace(/\D/g, "") || "0"), 1); }}
+                            disabled={isVoting}
+                            className="cursor-pointer bg-foreground text-background rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:opacity-90 disabled:opacity-50"
+                          >
+                            {isVoting ? "..." : "For"}
                           </button>
-                          <button className="cursor-pointer border border-border text-muted rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:border-border-hover hover:text-foreground">
-                            Against
+                          <button
+                            onClick={() => { if (!address) { showToast("Connect wallet to vote", "error"); return; } castVote(BigInt(p.id.replace(/\D/g, "") || "0"), 0); }}
+                            disabled={isVoting}
+                            className="cursor-pointer border border-border text-muted rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:border-border-hover hover:text-foreground disabled:opacity-50"
+                          >
+                            {isVoting ? "..." : "Against"}
                           </button>
                         </div>
                       )}

@@ -2,13 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
-import { useAccount } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
+import { formatUnits } from "viem";
 import { showToast } from "@/components/Toast";
 import type {
   VaultStatsResponse,
   UserPositionResponse,
   PerformanceResponse,
 } from "@/lib/types";
+import {
+  useApproveUSDC,
+  useUSDCAllowance,
+  useUSDCBalance,
+  useDeposit,
+  useRedeem,
+  useVaultShares,
+} from "@/hooks/useVault";
 import {
   AreaChart,
   Area,
@@ -44,6 +53,70 @@ export default function VaultPage() {
   const [performance, setPerformance] = useState<PerformanceResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Contract hooks
+  const { approve, isPending: isApproving, isSuccess: approveSuccess, isConfirming: approveConfirming } = useApproveUSDC();
+  const { data: allowance } = useUSDCAllowance(address);
+  const { data: usdcBalance } = useUSDCBalance(address);
+  const { data: ethBalance } = useBalance({ address });
+  const { deposit, isPending: isDepositing, isSuccess: depositSuccess, isConfirming: depositConfirming } = useDeposit();
+  const { redeem, isPending: isRedeeming, isSuccess: redeemSuccess, isConfirming: redeemConfirming } = useRedeem();
+  const { data: vaultSharesBigInt } = useVaultShares(address);
+
+  // After approval succeeds, trigger the deposit
+  useEffect(() => {
+    if (approveSuccess && amount && address && selectedToken === "USDC") {
+      deposit(amount, address);
+    }
+  }, [approveSuccess]);
+
+  // Toast on deposit/redeem success
+  useEffect(() => {
+    if (depositSuccess) {
+      showToast("Deposit confirmed!", "success");
+      setAmount("");
+    }
+  }, [depositSuccess]);
+
+  useEffect(() => {
+    if (redeemSuccess) {
+      showToast("Withdrawal confirmed!", "success");
+      setAmount("");
+    }
+  }, [redeemSuccess]);
+
+  const handleAction = () => {
+    if (!address) {
+      showToast("Connect your wallet first", "error");
+      return;
+    }
+    if (!amount || parseFloat(amount.replace(/,/g, "")) <= 0) {
+      showToast("Enter a valid amount", "error");
+      return;
+    }
+
+    if (activeTab === "deposit") {
+      if (selectedToken === "USDC") {
+        const parsedAmount = parseFloat(amount.replace(/,/g, ""));
+        const allowanceNum = allowance ? parseFloat(formatUnits(allowance as bigint, 6)) : 0;
+        if (allowanceNum < parsedAmount) {
+          approve(amount.replace(/,/g, ""));
+          showToast("Approving USDC...", "info");
+        } else {
+          deposit(amount.replace(/,/g, ""), address);
+          showToast("Depositing...", "info");
+        }
+      } else {
+        showToast("ETH deposits coming soon — use USDC", "info");
+      }
+    } else {
+      // Withdraw: redeem shares
+      redeem(amount.replace(/,/g, ""), address);
+      showToast("Redeeming shares...", "info");
+    }
+  };
+
+  const isTxPending = isApproving || isDepositing || isRedeeming || approveConfirming || depositConfirming || redeemConfirming;
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -77,7 +150,9 @@ export default function VaultPage() {
       .catch(() => showToast("Failed to load position", "error"));
   }, [address]);
 
-  const balance = selectedToken === "ETH" ? "4.23" : "8,412.50";
+  const balance = selectedToken === "ETH"
+    ? (ethBalance ? parseFloat(formatUnits(ethBalance.value, 18)).toFixed(4) : "0")
+    : (usdcBalance ? parseFloat(formatUnits(usdcBalance as bigint, 6)).toLocaleString() : "0");
   const exchangeRate =
     selectedToken === "ETH"
       ? "1 ETH = 0.0135% vault share"
@@ -283,8 +358,16 @@ export default function VaultPage() {
               </div>
 
               {/* Action Button */}
-              <button className="w-full cursor-pointer rounded-xl bg-foreground py-4 font-heading font-bold text-background transition-all duration-300 hover:opacity-90">
-                {activeTab === "deposit" ? "Deposit to Vault" : "Redeem cVault Shares"}
+              <button
+                onClick={handleAction}
+                disabled={isTxPending}
+                className="w-full cursor-pointer rounded-xl bg-foreground py-4 font-heading font-bold text-background transition-all duration-300 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isTxPending
+                  ? "Processing..."
+                  : activeTab === "deposit"
+                    ? "Deposit to Vault"
+                    : "Redeem cVault Shares"}
               </button>
             </div>
           </div>

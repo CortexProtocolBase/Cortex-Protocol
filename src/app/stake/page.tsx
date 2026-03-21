@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
+import { formatUnits } from "viem";
 import Navbar from "@/components/Navbar";
 import { showToast } from "@/components/Toast";
 import { Coins, Lock, Gift, TrendingUp, Info } from "lucide-react";
 import type { StakingInfoResponse } from "@/lib/types";
+import { useApproveForStaking, useStake, useUnstake, useClaimRewards, useCortexBalance } from "@/hooks/useStaking";
+import { LOCK_TIERS } from "@/lib/constants";
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
@@ -17,6 +20,43 @@ export default function StakePage() {
   const [amount, setAmount] = useState("");
   const [stakingInfo, setStakingInfo] = useState<StakingInfoResponse | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Contract hooks
+  const { approve, isPending: isApproving, isSuccess: approveSuccess } = useApproveForStaking();
+  const { stake, isPending: isStaking, isSuccess: stakeSuccess } = useStake();
+  const { unstake, isPending: isUnstaking, isSuccess: unstakeSuccess } = useUnstake();
+  const { claimRewards, isPending: isClaiming, isSuccess: claimSuccess } = useClaimRewards();
+  const { data: cortexBalance } = useCortexBalance(address);
+
+  const lockDaysMap = [0, 30, 90, 180];
+
+  useEffect(() => {
+    if (approveSuccess && amount && selectedLock !== undefined) {
+      stake(amount, lockDaysMap[selectedLock]);
+      showToast("Staking...", "info");
+    }
+  }, [approveSuccess]);
+
+  useEffect(() => {
+    if (stakeSuccess) { showToast("Staked successfully!", "success"); setAmount(""); }
+  }, [stakeSuccess]);
+
+  useEffect(() => {
+    if (unstakeSuccess) showToast("Unstaked successfully!", "success");
+  }, [unstakeSuccess]);
+
+  useEffect(() => {
+    if (claimSuccess) showToast("Rewards claimed!", "success");
+  }, [claimSuccess]);
+
+  const handleStake = () => {
+    if (!address) { showToast("Connect wallet first", "error"); return; }
+    if (!amount || parseFloat(amount) <= 0) { showToast("Enter a valid amount", "error"); return; }
+    approve(amount);
+    showToast("Approving CORTEX...", "info");
+  };
+
+  const isTxPending = isApproving || isStaking || isUnstaking || isClaiming;
 
   useEffect(() => {
     if (!address) {
@@ -201,7 +241,7 @@ export default function StakePage() {
                     </button>
                   </div>
                   <p className="text-xs text-muted mt-2">
-                    Available: 3,200 CORTEX
+                    Available: {cortexBalance ? parseFloat(formatUnits(cortexBalance as bigint, 18)).toLocaleString() : "0"} CORTEX
                   </p>
                 </div>
 
@@ -243,8 +283,12 @@ export default function StakePage() {
                 )}
 
                 {/* Stake Button */}
-                <button className="cursor-pointer mt-6 bg-foreground text-background rounded-xl py-4 w-full font-heading font-bold hover:opacity-90 transition-opacity duration-200">
-                  Stake CORTEX
+                <button
+                  onClick={handleStake}
+                  disabled={isTxPending}
+                  className="cursor-pointer mt-6 bg-foreground text-background rounded-xl py-4 w-full font-heading font-bold hover:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isTxPending ? "Processing..." : "Stake CORTEX"}
                 </button>
               </div>
 
@@ -278,9 +322,22 @@ export default function StakePage() {
                   </p>
                 )}
 
-                <button className="cursor-pointer mt-4 bg-foreground text-background rounded-lg px-6 py-3 w-full font-heading font-bold hover:opacity-90 transition-opacity duration-200">
-                  Claim Rewards
-                </button>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => claimRewards()}
+                    disabled={isTxPending}
+                    className="cursor-pointer flex-1 bg-foreground text-background rounded-lg px-4 py-3 font-heading font-bold hover:opacity-90 transition-opacity duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isClaiming ? "Claiming..." : "Claim Rewards"}
+                  </button>
+                  <button
+                    onClick={() => unstake()}
+                    disabled={isTxPending}
+                    className="cursor-pointer flex-1 border border-border text-foreground rounded-lg px-4 py-3 font-heading font-bold hover:bg-card-hover transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isUnstaking ? "Unstaking..." : "Unstake"}
+                  </button>
+                </div>
               </div>
             </div>
 

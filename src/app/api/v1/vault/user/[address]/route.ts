@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { mockUserPosition } from "@/lib/mock-data";
+import { walletAddressSchema } from "@/lib/validation";
 import type { ApiResponse, UserPositionResponse } from "@/lib/types";
 
 export async function GET(
@@ -9,7 +10,8 @@ export async function GET(
 ) {
   const { address } = await params;
 
-  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+  const validated = walletAddressSchema.safeParse(address);
+  if (!validated.success) {
     return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
   }
 

@@ -15,6 +15,7 @@ import { createClient, type RealtimeChannel } from "@supabase/supabase-js";
 interface RealtimeState {
   vaultTvl: number | null;
   lastTradeId: string | null;
+  lastAiCycleId: number | null;
   connected: boolean;
 }
 
@@ -25,6 +26,7 @@ interface RealtimeContextValue extends RealtimeState {
 const RealtimeContext = createContext<RealtimeContextValue>({
   vaultTvl: null,
   lastTradeId: null,
+  lastAiCycleId: null,
   connected: false,
   subscribe: () => () => {},
 });
@@ -39,6 +41,7 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
   const [state, setState] = useState<RealtimeState>({
     vaultTvl: null,
     lastTradeId: null,
+    lastAiCycleId: null,
     connected: false,
   });
 
@@ -71,6 +74,16 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
           const record = payload.new as { id?: string };
           if (record.id) {
             setState((prev) => ({ ...prev, lastTradeId: record.id! }));
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "ai_reasoning_logs" },
+        (payload) => {
+          const record = payload.new as { cycle_id?: number };
+          if (record.cycle_id) {
+            setState((prev) => ({ ...prev, lastAiCycleId: record.cycle_id! }));
           }
         }
       )

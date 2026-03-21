@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { mockVaultStats } from "@/lib/mock-data";
+import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import type { ApiResponse, VaultStatsResponse } from "@/lib/types";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const ip = getClientIp(request);
+  const { success } = rateLimit(`vault-stats:${ip}`, 60);
+  if (!success) return rateLimitResponse();
   try {
     const { data: snapshot, error } = await supabase
       .from("vault_snapshots")

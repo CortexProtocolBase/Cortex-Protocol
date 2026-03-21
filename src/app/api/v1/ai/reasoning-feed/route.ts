@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { mockReasoningFeed } from "@/lib/mock-data";
 import { getWalletFromHeaders } from "@/lib/token-gate";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import type { ApiResponse, ReasoningFeedEntry, AiDecision } from "@/lib/types";
 
 function timeAgo(ts: string): string {
@@ -27,6 +28,9 @@ export async function GET(request: Request) {
       { status: 403 }
     );
   }
+
+  const { success } = rateLimit(`ai-feed:${wallet}`, 30);
+  if (!success) return rateLimitResponse();
 
   try {
     const { data: logs, error } = await supabase

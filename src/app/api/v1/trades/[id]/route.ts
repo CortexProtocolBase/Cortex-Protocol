@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { mockTrades } from "@/lib/mock-data";
+import { tradeIdSchema } from "@/lib/validation";
 import type { ApiResponse, TradeResponse, TradeType, Tier } from "@/lib/types";
 
 const ACTION_LABELS: Record<string, TradeType> = {

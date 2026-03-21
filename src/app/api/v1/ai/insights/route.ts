@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { mockAiInsights } from "@/lib/mock-data";
 import { getWalletFromHeaders } from "@/lib/token-gate";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import type { ApiResponse, AiInsightsResponse } from "@/lib/types";
 
 export async function GET(request: Request) {
@@ -12,6 +13,9 @@ export async function GET(request: Request) {
       { status: 403 }
     );
   }
+
+  const { success } = rateLimit(`ai-insights:${wallet}`, 30);
+  if (!success) return rateLimitResponse();
 
   try {
     const { data: latest, error } = await supabase

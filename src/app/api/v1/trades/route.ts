@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { mockTrades, MOCK_TOTAL_TRADES } from "@/lib/mock-data";
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/constants";
+import { tradeFilterSchema } from "@/lib/validation";
 import type { PaginatedResponse, TradeResponse, Tier, TradeType } from "@/lib/types";
 
 const ACTION_LABELS: Record<string, TradeType> = {
@@ -28,13 +29,21 @@ function timeAgo(ts: string): string {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const pageSize = Math.min(
-    MAX_PAGE_SIZE,
-    Math.max(1, parseInt(searchParams.get("pageSize") || String(DEFAULT_PAGE_SIZE), 10))
-  );
-  const tierFilter = searchParams.get("tier") as Tier | null;
-  const typeFilter = searchParams.get("type") as TradeType | null;
+  const parsed = tradeFilterSchema.safeParse({
+    page: searchParams.get("page") ?? undefined,
+    pageSize: searchParams.get("pageSize") ?? undefined,
+    tier: searchParams.get("tier") ?? undefined,
+    type: searchParams.get("type") ?? undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid parameters", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+
+  const { page, pageSize, tier: tierFilter, type: typeFilter } = parsed.data;
 
   try {
     let query = supabase

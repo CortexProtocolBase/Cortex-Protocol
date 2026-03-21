@@ -6,3 +6,6 @@ tsconfig.tsbuildinfo
 .vercel
 .DS_Store
 .env*.local
+contracts/out/
+contracts/cache/
+contracts/broadcast/

@@ -57,7 +57,8 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[governance/proposals] Supabase query failed:", err);
     const response: ApiResponse<GovernanceResponse> = {
       data: mockGovernance,
       timestamp: new Date().toISOString(),

@@ -79,7 +79,8 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[trades] Supabase query failed:", err);
     let filtered = [...mockTrades];
     if (tierFilter) filtered = filtered.filter((t) => t.tier === tierFilter);
     if (typeFilter) filtered = filtered.filter((t) => t.type === typeFilter);

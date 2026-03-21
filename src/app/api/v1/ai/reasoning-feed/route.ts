@@ -50,7 +50,8 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[ai/reasoning-feed] Supabase query failed:", err);
     const response: ApiResponse<ReasoningFeedEntry[]> = {
       data: mockReasoningFeed,
       timestamp: new Date().toISOString(),

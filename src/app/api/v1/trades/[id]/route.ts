@@ -52,7 +52,8 @@ export async function GET(
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[trades/[id]] Supabase query failed:", err);
     const trade = mockTrades.find((t) => t.id === id);
     if (!trade) {
       return NextResponse.json({ error: "Trade not found" }, { status: 404 });

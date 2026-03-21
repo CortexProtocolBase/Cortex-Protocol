@@ -90,7 +90,8 @@ export async function GET(
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[vault/user] Supabase query failed:", err);
     // Fallback to mock data
     const response: ApiResponse<UserPositionResponse> = {
       data: { ...mockUserPosition, walletAddress: address },

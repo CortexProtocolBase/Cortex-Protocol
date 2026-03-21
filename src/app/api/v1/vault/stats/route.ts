@@ -37,7 +37,8 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[vault/stats] Supabase query failed:", err);
     // Fallback to mock data if Supabase is unavailable
     const response: ApiResponse<VaultStatsResponse> = {
       data: mockVaultStats,

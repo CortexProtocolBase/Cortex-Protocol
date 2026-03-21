@@ -63,7 +63,8 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[performance] Supabase query failed:", err);
     const response: ApiResponse<PerformanceResponse> = {
       data: mockPerformance,
       timestamp: new Date().toISOString(),

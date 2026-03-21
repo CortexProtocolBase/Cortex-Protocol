@@ -54,7 +54,8 @@ export async function GET(
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[staking/info] Supabase query failed:", err);
     const response: ApiResponse<StakingInfoResponse> = {
       data: mockStakingInfo,
       timestamp: new Date().toISOString(),

@@ -55,7 +55,8 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response);
-  } catch {
+  } catch (err) {
+    console.error("[ai/insights] Supabase query failed:", err);
     const response: ApiResponse<AiInsightsResponse> = {
       data: mockAiInsights,
       timestamp: new Date().toISOString(),

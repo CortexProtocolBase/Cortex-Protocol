@@ -1,0 +1,3 @@
+"use client";
+import { useState, useEffect } from "react";
+export function useCountdown(targetDate: Date): { days: number; hours: number; minutes: number; seconds: number; isExpired: boolean } { const [timeLeft, setTimeLeft] = useState(targetDate.getTime() - Date.now()); useEffect(() => { const t = setInterval(() => setTimeLeft(targetDate.getTime() - Date.now()), 1000); return () => clearInterval(t); }, [targetDate]); const isExpired = timeLeft <= 0; const total = Math.max(0, timeLeft); return { days: Math.floor(total / 86400000), hours: Math.floor((total % 86400000) / 3600000), minutes: Math.floor((total % 3600000) / 60000), seconds: Math.floor((total % 60000) / 1000), isExpired }; }

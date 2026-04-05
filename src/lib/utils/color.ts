@@ -1,0 +1,3 @@
+export function getTierColor(tier: string): string { switch (tier.toLowerCase()) { case "core": return "#3B82F6"; case "mid": return "#60A5FA"; case "degen": return "#93C5FD"; default: return "#a1a1aa"; } }
+export function getPnlColor(pnl: number): string { return pnl >= 0 ? "text-primary" : "text-red-500"; }
+export function getStatusColor(status: string): string { switch (status.toLowerCase()) { case "active": return "text-primary bg-primary/10"; case "passed": case "completed": return "text-green-500 bg-green-500/10"; case "rejected": case "failed": return "text-red-500 bg-red-500/10"; default: return "text-muted bg-card-solid"; } }

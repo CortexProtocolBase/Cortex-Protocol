@@ -1,0 +1,1 @@
+export const MID_STRATEGY = { name: "Mid-Risk", targetAllocation: 20, minAllocation: 5, maxAllocation: 35, allowedProtocols: ["aerodrome", "uniswap-v3"], allowedAssets: ["AERO", "DEGEN", "WETH", "USDC"], maxPositionSize: 15, rebalanceThreshold: 3, description: "Established Base tokens and LP positions" };

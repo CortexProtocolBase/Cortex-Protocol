@@ -1,0 +1,1 @@
+export const DEGEN_STRATEGY = { name: "Degen", targetAllocation: 10, minAllocation: 0, maxAllocation: 15, allowedProtocols: ["uniswap-v3", "aerodrome"], allowedAssets: ["*"], maxPositionSize: 5, rebalanceThreshold: 2, description: "New launches and momentum plays" };

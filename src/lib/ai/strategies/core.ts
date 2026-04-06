@@ -1,0 +1,1 @@
+export const CORE_STRATEGY = { name: "Core", targetAllocation: 70, minAllocation: 50, maxAllocation: 90, allowedProtocols: ["aave", "compound"], allowedAssets: ["WETH", "USDC", "cbBTC"], maxPositionSize: 30, rebalanceThreshold: 5, description: "Low-risk lending and staking on established protocols" };

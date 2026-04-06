@@ -1,0 +1,1 @@
+export function buildTradePrompt(decision: string, confidence: number): string { return `Based on decision: ${decision} (confidence: ${confidence}%), propose specific trades. Include: token pair, amount, protocol, tier, and reasoning for each trade.`; }

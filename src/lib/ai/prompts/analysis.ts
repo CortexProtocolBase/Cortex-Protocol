@@ -1,0 +1,1 @@
+export function buildAnalysisPrompt(data: { prices: Record<string, number>; tvl: number; sentiment: Record<string, number> }): string { return `Analyze current market: TVL $${data.tvl}, Prices: ${JSON.stringify(data.prices)}, Sentiment: ${JSON.stringify(data.sentiment)}. Recommend: HOLD, TRADE, or REBALANCE with reasoning.`; }

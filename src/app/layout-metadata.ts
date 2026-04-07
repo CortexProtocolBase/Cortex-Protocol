@@ -8,5 +8,5 @@ export const siteMetadata: Metadata = {
   openGraph: { type: "website", locale: "en_US", url: "https://www.cortexprotocol.net", siteName: "CORTEX Protocol", title: "CORTEX Protocol — AI-Managed DeFi Vault", description: "Autonomous AI manages your DeFi portfolio on Base. Deposit and earn yield.", images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "CORTEX Protocol" }] },
   twitter: { card: "summary_large_image", title: "CORTEX Protocol", description: "AI-managed DeFi vault on Base", images: ["/og-image.png"], creator: "@CortexBase" },
   robots: { index: true, follow: true },
-  icons: { icon: "/favicon.ico" },
+  icons: { icon: [{ url: "/favicon-32.png", sizes: "32x32" }, { url: "/favicon-16.png", sizes: "16x16" }], apple: "/apple-touch-icon.png" },
 };

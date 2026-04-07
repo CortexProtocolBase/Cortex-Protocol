@@ -73,7 +73,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="cursor-pointer flex items-center gap-2">
             <Image
-              src="/cortex-logo.png"
+              src="/transparentcortex.png"
               alt="Cortex"
               width={28}
               height={28}

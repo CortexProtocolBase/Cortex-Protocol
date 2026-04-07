@@ -24,15 +24,15 @@ export class UniswapV3Adapter implements DEXAdapter {
     for (const fee of [FEE_TIERS.LOW, FEE_TIERS.MEDIUM, FEE_TIERS.HIGH]) {
       try { const pool = await client.readContract({ address: UNISWAP_V3.FACTORY as `0x${string}`, abi: UNISWAP_FACTORY_ABI, functionName: "getPool", args: [tokenA as `0x${string}`, tokenB as `0x${string}`, fee] });
         if (pool && pool !== "0x0000000000000000000000000000000000000000") { const [slot0, liq] = await Promise.all([client.readContract({ address: pool as `0x${string}`, abi: UNISWAP_POOL_ABI, functionName: "slot0" }), client.readContract({ address: pool as `0x${string}`, abi: UNISWAP_POOL_ABI, functionName: "liquidity" })]);
-          const [sqrtPriceX96, tick] = slot0 as [bigint, number, ...unknown[]]; return { address: pool as string, tokenA, tokenB, fee, liquidity: liq as bigint, sqrtPriceX96, tick }; }
+          const s0 = slot0 as unknown as [bigint, number, ...unknown[]]; const [sqrtPriceX96, tick] = s0; return { address: pool as string, tokenA, tokenB, fee, liquidity: liq as bigint, sqrtPriceX96, tick }; }
       } catch { continue; }
     } return null;
   }
   private async findBestFee(tokenIn: string, tokenOut: string, amountIn: bigint): Promise<number> {
-    let bestFee = FEE_TIERS.MEDIUM; let bestOutput = 0n;
+    let bestFee: number = FEE_TIERS.MEDIUM; let bestOutput = 0n;
     for (const fee of [FEE_TIERS.LOWEST, FEE_TIERS.LOW, FEE_TIERS.MEDIUM, FEE_TIERS.HIGH]) {
       try { const result = await client.readContract({ address: UNISWAP_V3.QUOTER as `0x${string}`, abi: UNISWAP_QUOTER_ABI, functionName: "quoteExactInputSingle", args: [{ tokenIn: tokenIn as `0x${string}`, tokenOut: tokenOut as `0x${string}`, amountIn, fee, sqrtPriceLimitX96: 0n }] });
-        const [out] = result as [bigint, ...unknown[]]; if (out > bestOutput) { bestOutput = out; bestFee = fee; }
+        const [out] = result as [bigint, ...unknown[]]; if (out > bestOutput) { bestOutput = out; bestFee = fee as number; }
       } catch { continue; }
     } return bestFee;
   }

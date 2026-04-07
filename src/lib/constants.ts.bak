@@ -1,7 +1,0 @@
-export const CHAIN_ID = 8453;
-export const CHAIN_NAME = "Base";
-export const BLOCK_TIME = 2; // seconds
-export const RPC_URL = process.env.BASE_RPC_URL || "https://mainnet.base.org";
-export const EXPLORER_URL = "https://basescan.org";
-export const EXPLORER_TX_URL = (hash: string) => `${EXPLORER_URL}/tx/${hash}`;
-export const EXPLORER_ADDRESS_URL = (addr: string) => `${EXPLORER_URL}/address/${addr}`;

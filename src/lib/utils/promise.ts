@@ -1,0 +1,3 @@
+export function sleep(ms: number): Promise<void> { return new Promise(r => setTimeout(r, ms)); }
+export async function timeout<T>(promise: Promise<T>, ms: number): Promise<T> { const timer = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms)); return Promise.race([promise, timer]); }
+export async function allSettledMap<T, R>(items: T[], fn: (item: T) => Promise<R>): Promise<{ item: T; result?: R; error?: Error }[]> { const results = await Promise.allSettled(items.map(fn)); return items.map((item, i) => { const r = results[i]; return r.status === "fulfilled" ? { item, result: r.value } : { item, error: r.reason }; }); }

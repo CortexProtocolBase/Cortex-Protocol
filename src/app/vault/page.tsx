@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAccount, useBalance } from "wagmi";
 import { useWallet } from "@/contexts/WalletContext";
@@ -57,7 +57,7 @@ export default function VaultPage() {
   const [loading, setLoading] = useState(true);
 
   // Contract hooks
-  const { approve, hash: approveHash, isPending: isApproving, isConfirming: approveConfirming, isSuccess: approveSuccess } = useApproveUSDC();
+  const { approve, isPending: isApproving, isConfirming: approveConfirming, isSuccess: approveSuccess } = useApproveUSDC();
   const { data: allowance, refetch: refetchAllowance } = useUSDCAllowance(address);
   const { data: usdcBalance } = useUSDCBalance(address);
   const { data: ethBalance } = useBalance({ address });
@@ -65,21 +65,13 @@ export default function VaultPage() {
   const { redeem, isPending: isRedeeming, isSuccess: redeemSuccess, isConfirming: redeemConfirming } = useRedeem();
   const { data: vaultSharesBigInt } = useVaultShares(address);
 
-  // Track deposit flow state
-  const [depositStep, setDepositStep] = useState<"idle" | "approving" | "depositing">("idle");
-  const pendingAmountRef = useRef("");
-
-  // When approval confirms, immediately trigger deposit
+  // Refetch allowance when approval confirms so button label updates
   useEffect(() => {
-    if (approveSuccess && depositStep === "approving" && pendingAmountRef.current && address) {
-      setDepositStep("depositing");
-      showToast("Step 2/2: Depositing to vault...", "info");
-      // Refetch allowance first, then deposit
-      refetchAllowance().then(() => {
-        deposit(pendingAmountRef.current, address);
-      });
+    if (approveSuccess) {
+      refetchAllowance();
+      showToast("Approved! Now click Deposit to Vault.", "success");
     }
-  }, [approveSuccess, depositStep]);
+  }, [approveSuccess]);
 
   // Refresh everything after a tx
   const refreshAll = useCallback(() => {
@@ -94,11 +86,8 @@ export default function VaultPage() {
       .catch(() => {});
   }, [address]);
 
-  // Deposit confirmed
   useEffect(() => {
     if (depositSuccess) {
-      setDepositStep("idle");
-      pendingAmountRef.current = "";
       showToast("Deposit confirmed!", "success");
       setAmount("");
       refreshAll();
@@ -107,7 +96,6 @@ export default function VaultPage() {
     }
   }, [depositSuccess, refreshAll]);
 
-  // Withdraw confirmed
   useEffect(() => {
     if (redeemSuccess) {
       showToast("Withdrawal confirmed!", "success");
@@ -134,14 +122,11 @@ export default function VaultPage() {
         const parsedAmount = parseFloat(cleanAmount);
         const allowanceNum = allowance ? parseFloat(formatUnits(allowance as bigint, 6)) : 0;
         if (allowanceNum < parsedAmount) {
-          // Need approval first — store amount, start flow
-          pendingAmountRef.current = cleanAmount;
-          setDepositStep("approving");
+          // Step 1: Just approve — user clicks button again to deposit
           approve(cleanAmount);
-          showToast("Step 1/2: Approve USDC in your wallet...", "info");
+          showToast("Approve USDC spend in your wallet...", "info");
         } else {
-          // Already approved — deposit directly
-          setDepositStep("depositing");
+          // Approved — deposit now
           deposit(cleanAmount, address);
           showToast("Confirm deposit in your wallet...", "info");
         }
@@ -154,9 +139,8 @@ export default function VaultPage() {
     }
   };
 
-  const isTxPending = depositStep !== "idle" || isApproving || isDepositing || isRedeeming || approveConfirming || depositConfirming || redeemConfirming;
+  const isTxPending = isApproving || isDepositing || isRedeeming || approveConfirming || depositConfirming || redeemConfirming;
 
-  // Dynamic button label based on state
   const needsApproval = (() => {
     if (activeTab !== "deposit" || selectedToken !== "USDC" || !amount) return false;
     const parsedAmount = parseFloat(amount.replace(/,/g, ""));
@@ -165,11 +149,11 @@ export default function VaultPage() {
   })();
 
   const buttonLabel = (() => {
-    if (depositStep === "approving" || isApproving || approveConfirming) return "Approving USDC...";
-    if (depositStep === "depositing" || isDepositing || depositConfirming) return "Depositing...";
+    if (isApproving || approveConfirming) return "Approving USDC...";
+    if (isDepositing || depositConfirming) return "Depositing...";
     if (isRedeeming || redeemConfirming) return "Withdrawing...";
     if (activeTab === "withdraw") return "Redeem cVault Shares";
-    if (needsApproval) return "Approve & Deposit";
+    if (needsApproval) return "Approve USDC";
     return "Deposit to Vault";
   })();
 

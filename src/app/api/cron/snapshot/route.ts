@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     ]);
 
     const tvl = parseFloat(formatUnits(totalAssets, 6));
-    const totalShares = parseFloat(formatUnits(totalSupply, 18));
+    const totalShares = parseFloat(formatUnits(totalSupply, 6));
     const sharePrice = totalShares > 0 ? tvl / totalShares : 1;
 
     // Count unique depositors from user_positions

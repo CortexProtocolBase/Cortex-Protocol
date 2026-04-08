@@ -15,11 +15,11 @@ export async function GET(
   }
 
   try {
-    // Get user position
+    // Get user position (case-insensitive address match)
     const { data: position, error: posError } = await supabase
       .from("user_positions")
       .select("*")
-      .eq("wallet_address", address)
+      .ilike("wallet_address", address)
       .single();
 
     if (posError || !position) throw posError;
@@ -48,13 +48,13 @@ export async function GET(
       supabase
         .from("deposits")
         .select("*")
-        .eq("wallet_address", address)
+        .ilike("wallet_address", address)
         .order("timestamp", { ascending: false })
         .limit(5),
       supabase
         .from("withdrawals")
         .select("*")
-        .eq("wallet_address", address)
+        .ilike("wallet_address", address)
         .order("timestamp", { ascending: false })
         .limit(5),
     ]);

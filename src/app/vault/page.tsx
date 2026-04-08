@@ -76,16 +76,18 @@ export default function VaultPage() {
     }
   }, [approveSuccess]);
 
-  // Refresh data after deposit/redeem success
-  const refreshPosition = () => {
+  // Refresh everything after a tx — refetch on-chain + Supabase
+  const refreshAll = () => {
     if (!address) return;
-    fetch(`/api/v1/vault/user/${address}`)
-      .then((r) => r.json())
-      .then((json) => setUserPosition(json.data))
-      .catch(() => {});
+    // Immediate: refetch on-chain data (vault shares, USDC balance)
+    // wagmi auto-refetches after tx, but force a page-level data refresh too
     fetch("/api/v1/vault/stats")
       .then((r) => r.json())
       .then((json) => setVaultStats(json.data))
+      .catch(() => {});
+    fetch(`/api/v1/vault/user/${address}`)
+      .then((r) => r.json())
+      .then((json) => setUserPosition(json.data))
       .catch(() => {});
   };
 
@@ -93,8 +95,10 @@ export default function VaultPage() {
     if (depositSuccess) {
       showToast("Deposit confirmed!", "success");
       setAmount("");
-      // Refresh balances and position after short delay for indexer
-      setTimeout(refreshPosition, 2000);
+      // Refresh immediately, then again after indexer may have synced
+      refreshAll();
+      setTimeout(refreshAll, 5000);
+      setTimeout(refreshAll, 15000);
     }
   }, [depositSuccess]);
 
@@ -102,7 +106,9 @@ export default function VaultPage() {
     if (redeemSuccess) {
       showToast("Withdrawal confirmed!", "success");
       setAmount("");
-      setTimeout(refreshPosition, 2000);
+      refreshAll();
+      setTimeout(refreshAll, 5000);
+      setTimeout(refreshAll, 15000);
     }
   }, [redeemSuccess]);
 
@@ -244,7 +250,7 @@ export default function VaultPage() {
     type: tx.type,
     amount: `${tx.amount.toLocaleString()} USDC`,
     share: `${tx.share.toFixed(3)}%`,
-    date: tx.date,
+    date: new Date(tx.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
   }));
 
   const depositedAmount = userPosition?.depositedAmount ?? 0;

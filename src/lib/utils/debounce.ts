@@ -1,0 +1,2 @@
+export function debounce<T extends (...args: unknown[]) => unknown>(fn: T, ms: number): (...args: Parameters<T>) => void { let timer: ReturnType<typeof setTimeout>; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); }; }
+export function throttle<T extends (...args: unknown[]) => unknown>(fn: T, ms: number): (...args: Parameters<T>) => void { let lastCall = 0; return (...args) => { const now = Date.now(); if (now - lastCall >= ms) { lastCall = now; fn(...args); } }; }

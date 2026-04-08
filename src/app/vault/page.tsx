@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { useAccount, useBalance } from "wagmi";
+import { useWallet } from "@/contexts/WalletContext";
 import { formatUnits } from "viem";
 import { showToast } from "@/components/Toast";
 import type {
@@ -47,6 +48,7 @@ export default function VaultPage() {
   const [selectedToken, setSelectedToken] = useState<"ETH" | "USDC">("ETH");
   const [amount, setAmount] = useState("");
   const { address } = useAccount();
+  const { connected } = useWallet();
 
   const [vaultStats, setVaultStats] = useState<VaultStatsResponse | null>(null);
   const [userPosition, setUserPosition] = useState<UserPositionResponse | null>(null);

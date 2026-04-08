@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import WalletProvider from "@/providers/WalletProvider";
-import RealtimeProvider from "@/providers/RealtimeProvider";
-import ToastContainer from "@/components/Toast";
+import ClientProviders from "@/providers/ClientProviders";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,10 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="bg-background text-foreground font-body antialiased">
-        <WalletProvider>
-          <RealtimeProvider>{children}</RealtimeProvider>
-          <ToastContainer />
-        </WalletProvider>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );

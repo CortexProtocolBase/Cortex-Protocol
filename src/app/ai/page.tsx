@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useWallet } from "@/contexts/WalletContext";
 import Navbar from "@/components/Navbar";
 import { showToast } from "@/components/Toast";
 import { Brain, TrendingUp, Clock, Activity, Info } from "lucide-react";
@@ -22,7 +22,7 @@ const decisionStyles: Record<"HOLD" | "TRADE" | "REBALANCE", string> = {
 /* ------------------------------------------------------------------ */
 
 export default function AIPage() {
-  const { address } = useAccount();
+  const { fullWalletAddress: address } = useWallet();
   const [insights, setInsights] = useState<AiInsightsResponse | null>(null);
   const [feed, setFeed] = useState<ReasoningFeedEntry[]>([]);
   const [loading, setLoading] = useState(true);

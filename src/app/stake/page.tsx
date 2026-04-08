@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
+import { useWallet } from "@/contexts/WalletContext";
 import { formatUnits } from "viem";
 import Navbar from "@/components/Navbar";
 import { showToast } from "@/components/Toast";
@@ -16,6 +17,7 @@ import { LOCK_TIERS } from "@/lib/constants";
 
 export default function StakePage() {
   const { address } = useAccount();
+  const { connected } = useWallet();
   const [selectedLock, setSelectedLock] = useState(2); // default 3 Months
   const [amount, setAmount] = useState("");
   const [stakingInfo, setStakingInfo] = useState<StakingInfoResponse | null>(null);

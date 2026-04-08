@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { Copy } from "lucide-react";
-import { useAccount } from "wagmi";
+import { useWallet } from "@/contexts/WalletContext";
 import { showToast } from "@/components/Toast";
 import type {
   VaultStatsResponse,
@@ -54,7 +54,7 @@ function CustomTooltip({
 export default function DashboardPage() {
   const [activeFilter, setActiveFilter] = useState<string>("1Y");
   const [copied, setCopied] = useState(false);
-  const { address } = useAccount();
+  const { fullWalletAddress: address } = useWallet();
 
   const [vaultStats, setVaultStats] = useState<VaultStatsResponse | null>(null);
   const [userPosition, setUserPosition] = useState<UserPositionResponse | null>(null);

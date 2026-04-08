@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
+import { useWallet } from "@/contexts/WalletContext";
 import { formatUnits } from "viem";
 import Navbar from "@/components/Navbar";
 import { showToast } from "@/components/Toast";
@@ -64,6 +65,7 @@ function formatMarketCap(value: number): string {
 
 export default function GovernancePage() {
   const { address } = useAccount();
+  const { connected } = useWallet();
   const [data, setData] = useState<GovernanceResponse | null>(null);
   const [loading, setLoading] = useState(true);
 

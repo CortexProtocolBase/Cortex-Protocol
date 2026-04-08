@@ -6,9 +6,9 @@ interface RiskData { sharpeRatio: number; sortinoRatio: number; maxDrawdown: num
 export default function RiskPage() {
   const [data, setData] = useState<RiskData | null>(null);
   useEffect(() => {
-    fetch("/api/v1/risk/metrics").then(r => r.json()).then(d => setData(d.data)).catch(() => setData({ sharpeRatio: 2.4, sortinoRatio: 3.1, maxDrawdown: -8.3, volatility: 12.1, winRate: 73, profitFactor: 2.8, calmarRatio: 2.3, valueAtRisk95: 4.2, riskLevel: "moderate", riskScore: 35, factors: ["Moderate volatility at 12.1%", "Well-diversified across protocols"], recommendations: ["Consider reducing degen tier during high volatility"] }));
+    fetch("/api/v1/risk/metrics").then(r => r.json()).then(d => setData(d.data)).catch(() => setData(null));
   }, []);
-  if (!data) return <><Navbar /><main className="pt-28 pb-20 max-w-5xl mx-auto px-6"><div className="animate-pulse h-96 bg-card rounded-2xl" /></main></>;
+  if (!data) return <><Navbar /><main className="pt-28 pb-20 max-w-5xl mx-auto px-6"><div className="bg-card border border-border rounded-2xl p-10 text-center"><p className="text-muted text-lg">Unable to load risk data. Please try again later.</p></div></main></>;
   const metrics = [
     { label: "Sharpe Ratio", value: data.sharpeRatio.toFixed(2), icon: Award },
     { label: "Sortino Ratio", value: data.sortinoRatio.toFixed(2), icon: Award },

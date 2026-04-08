@@ -248,93 +248,72 @@ export default function TradesPage() {
                 Loading trades&hellip;
               </div>
             ) : (
-              <table className="w-full min-w-[700px]">
+              <table className="w-full min-w-[750px] table-fixed">
+                <colgroup>
+                  <col className="w-[80px]" />
+                  <col className="w-[90px]" />
+                  <col />
+                  <col className="w-[100px]" />
+                  <col className="w-[100px]" />
+                  <col className="w-[80px]" />
+                  <col className="w-[80px]" />
+                  <col className="w-[36px]" />
+                </colgroup>
                 <thead>
                   <tr className="text-left text-xs text-muted uppercase tracking-wider">
-                    <th className="pb-4 pr-4 font-medium">Time</th>
-                    <th className="pb-4 pr-4 font-medium">Type</th>
-                    <th className="pb-4 pr-4 font-medium">Asset</th>
-                    <th className="pb-4 pr-4 font-medium">Amount</th>
-                    <th className="pb-4 pr-4 font-medium">Protocol</th>
-                    <th className="pb-4 pr-4 font-medium">Tier</th>
-                    <th className="pb-4 pr-4 font-medium text-right">P&L</th>
-                    <th className="pb-4 font-medium w-8" />
+                    <th className="pb-4 font-medium">Time</th>
+                    <th className="pb-4 font-medium">Type</th>
+                    <th className="pb-4 font-medium">Asset</th>
+                    <th className="pb-4 font-medium">Amount</th>
+                    <th className="pb-4 font-medium">Protocol</th>
+                    <th className="pb-4 font-medium">Tier</th>
+                    <th className="pb-4 font-medium text-right">P&L</th>
+                    <th className="pb-4" />
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((trade, idx) => {
                     const isExpanded = expandedRows.has(trade.id);
                     return (
-                      <tr key={trade.id} className="group">
-                        <td
-                          colSpan={8}
-                          className={`p-0 ${
-                            idx < filtered.length - 1
-                              ? "border-b border-border"
-                              : ""
-                          }`}
-                        >
-                          {/* Main row */}
-                          <button
-                            onClick={() => toggleRow(trade.id)}
-                            className="w-full flex items-center text-left py-3 cursor-pointer hover:bg-card-solid/50 transition-colors rounded-lg -mx-1 px-1"
-                          >
-                            <span className="text-sm text-muted pr-4 w-[72px] shrink-0">
-                              {trade.time}
-                            </span>
-                            <span className="pr-4 w-[90px] shrink-0">
-                              <span
-                                className={`text-xs rounded-full px-2 py-0.5 ${typeBadge(
-                                  trade.type
-                                )}`}
-                              >
-                                {trade.type}
-                              </span>
-                            </span>
-                            <span className="text-sm text-foreground pr-4 flex-1 min-w-[120px]">
-                              {trade.asset}
-                            </span>
-                            <span className="text-sm text-foreground pr-4 w-[80px] shrink-0">
-                              {trade.amount}
-                            </span>
-                            <span className="text-sm text-muted pr-4 w-[90px] shrink-0">
-                              {trade.protocol}
-                            </span>
-                            <span className="pr-4 w-[80px] shrink-0">
-                              <span
-                                className={`text-xs rounded-full px-2 py-0.5 ${tierBadge(
-                                  trade.tier
-                                )}`}
-                              >
-                                {trade.tier}
-                              </span>
-                            </span>
-                            <span
-                              className={`text-sm font-medium pr-4 w-[70px] shrink-0 text-right ${
-                                trade.pnlPositive
-                                  ? "text-primary"
-                                  : "text-muted"
-                              }`}
-                            >
-                              {trade.pnl}
-                            </span>
-                            <span className="w-8 shrink-0 flex items-center justify-center">
-                              <ChevronDown
-                                className={`w-4 h-4 text-muted transition-transform duration-200 ${
-                                  isExpanded ? "rotate-180" : ""
-                                }`}
-                              />
-                            </span>
-                          </button>
-
-                          {/* Expanded reasoning */}
+                      <tr
+                        key={trade.id}
+                        className={`group cursor-pointer hover:bg-card-solid/50 transition-colors ${
+                          idx < filtered.length - 1 ? "border-b border-border" : ""
+                        }`}
+                        onClick={() => toggleRow(trade.id)}
+                      >
+                        <td className="py-3 text-sm text-muted align-top">
+                          {trade.time}
+                        </td>
+                        <td className="py-3 align-top">
+                          <span className={`text-xs rounded-full px-2 py-0.5 whitespace-nowrap ${typeBadge(trade.type)}`}>
+                            {trade.type}
+                          </span>
+                        </td>
+                        <td className="py-3 align-top">
+                          <div className="text-sm text-foreground">{trade.asset}</div>
                           {isExpanded && (
-                            <div className="border-l-2 border-primary pl-4 ml-4 py-2 mb-3">
-                              <p className="text-muted text-sm">
-                                {trade.reasoning}
-                              </p>
+                            <div className="border-l-2 border-primary pl-3 mt-2 mb-1">
+                              <p className="text-muted text-xs leading-relaxed">{trade.reasoning}</p>
                             </div>
                           )}
+                        </td>
+                        <td className="py-3 text-sm text-foreground align-top">
+                          {trade.amount}
+                        </td>
+                        <td className="py-3 text-sm text-muted align-top">
+                          {trade.protocol}
+                        </td>
+                        <td className="py-3 align-top">
+                          <span className={`text-xs rounded-full px-2 py-0.5 ${tierBadge(trade.tier)}`}>
+                            {trade.tier}
+                          </span>
+                        </td>
+                        <td className={`py-3 text-sm font-medium text-right align-top ${trade.pnlPositive ? "text-primary" : "text-muted"}`}>
+                          {trade.pnl}
+                        </td>
+                        <td className="py-3 text-center align-top">
+                          <ChevronDown className={`w-4 h-4 text-muted transition-transform duration-200 inline-block ${isExpanded ? "rotate-180" : ""}`} />
                         </td>
                       </tr>
                     );

@@ -194,6 +194,7 @@ export default function VaultPage() {
   ]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .filter((d, i, arr) => i === 0 || d.date !== arr[i - 1].date)
+    .filter((d) => d.value > 0) // Only show non-zero data points
     .map((d) => ({
       month: new Date(d.date).toLocaleDateString("default", { month: "short", day: "numeric" }),
       tvl: d.value,

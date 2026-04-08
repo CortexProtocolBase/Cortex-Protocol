@@ -139,8 +139,8 @@ export default function DashboardPage() {
     ...(performance?.monthly ?? []),
   ]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    // deduplicate by date string
-    .filter((d, i, arr) => i === 0 || d.date !== arr[i - 1].date);
+    .filter((d, i, arr) => i === 0 || d.date !== arr[i - 1].date)
+    .filter((d) => d.value > 0); // Only show non-zero data points
 
   // Filter by selected range; if empty, fall back to showing all available data
   const filteredPerfData = filterByTimeRange(rawPerfData, activeFilter);

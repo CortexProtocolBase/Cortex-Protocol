@@ -295,17 +295,10 @@ export default function VaultPage() {
                 >
                   USDC
                 </button>
-                <button
-                  onClick={() => setSelectedToken("ETH")}
-                  className={`rounded-xl border px-5 py-2.5 font-heading text-sm transition-all duration-300 ${
-                    selectedToken === "ETH"
-                      ? "border-border bg-card-solid text-foreground"
-                      : "border-transparent text-muted"
-                  }`}
-                >
+                <span className="rounded-xl border border-transparent px-5 py-2.5 font-heading text-sm text-muted/30 cursor-default select-none">
                   ETH (Base)
-                  <span className="ml-1.5 text-[10px] text-muted/60">Soon</span>
-                </button>
+                  <span className="ml-1.5 text-[10px]">Soon</span>
+                </span>
               </div>
 
               {/* Amount Input */}

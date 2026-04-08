@@ -29,7 +29,6 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  Tooltip,
 } from "recharts";
 import WalletGate from "@/components/WalletGate";
 
@@ -82,29 +81,7 @@ const riskBadge = (risk: string) => {
 /*  Custom Pie Tooltip                                                 */
 /* ------------------------------------------------------------------ */
 
-function PieTooltipContent({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: Array<{
-    name: string;
-    value: number;
-    payload: { amount: string; description: string };
-  }>;
-}) {
-  if (!active || !payload || !payload.length) return null;
-  const d = payload[0];
-  return (
-    <div className="bg-card-solid border border-border rounded-lg px-3 py-2 max-w-xs">
-      <p className="text-sm font-medium text-foreground">{d.name}</p>
-      <p className="text-xs text-muted">
-        {d.value}% &middot; {d.payload.amount}
-      </p>
-      <p className="text-xs text-muted mt-1">{d.payload.description}</p>
-    </div>
-  );
-}
+// Tooltip is rendered below the chart instead of overlapping it
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
@@ -337,45 +314,56 @@ export default function StrategyPage() {
                 <Skeleton className="w-64 h-64 sm:w-72 sm:h-72 rounded-full" />
               </div>
             ) : (
-              <div className="relative w-full flex justify-center">
-                <div className="w-64 h-64 sm:w-72 sm:h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={allocationData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius="58%"
-                        outerRadius="85%"
-                        paddingAngle={3}
-                        dataKey="value"
-                        stroke="none"
-                        onMouseEnter={(_, index) => setActiveIndex(index)}
-                        onMouseLeave={() => setActiveIndex(null)}
-                      >
-                        {allocationData.map((entry, index) => (
-                          <Cell
-                            key={entry.name}
-                            fill={entry.color}
-                            opacity={
-                              activeIndex === null || activeIndex === index
-                                ? 1
-                                : 0.4
-                            }
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip content={<PieTooltipContent />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+              <>
+                <div className="relative w-full flex justify-center">
+                  <div className="w-64 h-64 sm:w-72 sm:h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={allocationData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="58%"
+                          outerRadius="85%"
+                          paddingAngle={3}
+                          dataKey="value"
+                          stroke="none"
+                          onMouseEnter={(_, index) => setActiveIndex(index)}
+                          onMouseLeave={() => setActiveIndex(null)}
+                        >
+                          {allocationData.map((entry, index) => (
+                            <Cell
+                              key={entry.name}
+                              fill={entry.color}
+                              opacity={
+                                activeIndex === null || activeIndex === index
+                                  ? 1
+                                  : 0.4
+                              }
+                            />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="font-heading text-2xl font-bold text-foreground">
+                      {activeIndex !== null ? allocationData[activeIndex]?.name : totalValue}
+                    </span>
+                    <span className="text-xs text-muted mt-1">
+                      {activeIndex !== null
+                        ? `${allocationData[activeIndex]?.value}% · ${allocationData[activeIndex]?.amount}`
+                        : "Total Value"}
+                    </span>
+                  </div>
                 </div>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="font-heading text-2xl font-bold text-foreground">
-                    {totalValue}
-                  </span>
-                  <span className="text-xs text-muted mt-1">Total Value</span>
-                </div>
-              </div>
+                {/* Hover info below chart */}
+                {activeIndex !== null && allocationData[activeIndex] && (
+                  <div className="mt-4 text-center">
+                    <p className="text-xs text-muted">{allocationData[activeIndex].description}</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

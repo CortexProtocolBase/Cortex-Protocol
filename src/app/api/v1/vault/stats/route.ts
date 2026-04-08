@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import type { ApiResponse, VaultStatsResponse } from "@/lib/types";
 

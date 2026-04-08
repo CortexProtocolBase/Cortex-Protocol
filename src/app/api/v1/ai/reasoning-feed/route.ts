@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { getWalletFromHeaders } from "@/lib/token-gate";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import type { ApiResponse, ReasoningFeedEntry, AiDecision } from "@/lib/types";

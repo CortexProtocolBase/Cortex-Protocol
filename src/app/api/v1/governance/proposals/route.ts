@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import type { ApiResponse, GovernanceResponse, ProposalStatus } from "@/lib/types";
 
 function timeRemaining(endDate: string): string | null {

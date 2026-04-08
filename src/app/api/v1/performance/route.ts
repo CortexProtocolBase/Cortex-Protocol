@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import type { ApiResponse, PerformanceResponse } from "@/lib/types";
 
 export async function GET() {
@@ -34,11 +34,13 @@ export async function GET() {
     }
     const weekly = Array.from(weeklyMap.values()).slice(-52);
 
-    // Daily (last 30 entries)
-    const daily = snapshots.slice(-30).map((s) => ({
-      date: new Date(s.timestamp).toISOString().split("T")[0],
-      value: Number(s.total_assets),
-    }));
+    // Daily — aggregate by date (latest value per day)
+    const dailyMap = new Map<string, { date: string; value: number }>();
+    for (const s of snapshots) {
+      const key = new Date(s.timestamp).toISOString().split("T")[0];
+      dailyMap.set(key, { date: key, value: Number(s.total_assets) });
+    }
+    const daily = Array.from(dailyMap.values()).slice(-30);
 
     const first = snapshots[0];
     const last = snapshots[snapshots.length - 1];

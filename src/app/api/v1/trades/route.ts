@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/constants";
 import { tradeFilterSchema } from "@/lib/validation";
 import type { PaginatedResponse, TradeResponse, Tier, TradeType } from "@/lib/types";

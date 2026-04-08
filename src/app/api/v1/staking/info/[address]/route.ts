@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabase";
 import { walletAddressSchema } from "@/lib/validation";
 import type { ApiResponse, StakingInfoResponse } from "@/lib/types";
 

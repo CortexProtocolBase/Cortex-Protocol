@@ -46,7 +46,7 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function VaultPage() {
   const [activeTab, setActiveTab] = useState<"deposit" | "withdraw">("deposit");
-  const [selectedToken, setSelectedToken] = useState<"ETH" | "USDC">("ETH");
+  const [selectedToken, setSelectedToken] = useState<"ETH" | "USDC">("USDC");
   const [amount, setAmount] = useState("");
   const { address } = useAccount();
   const { connected } = useWallet();
@@ -235,7 +235,7 @@ export default function VaultPage() {
             <span className="inline-flex items-center gap-1.5 rounded-full bg-card-solid border border-border px-3 py-1 text-xs text-muted"><span className="w-1.5 h-1.5 rounded-full bg-primary" />Base</span>
           </div>
           <p className="mt-2 font-body text-lg text-muted">
-            Deposit ETH or USDC on Base. Receive cVault shares. Let the AI manage the rest.
+            Deposit USDC on Base. Receive cVault shares. Let the AI manage the rest.
           </p>
         </section>
 
@@ -286,16 +286,6 @@ export default function VaultPage() {
               {/* Token Buttons */}
               <div className="mb-6 flex gap-3">
                 <button
-                  onClick={() => setSelectedToken("ETH")}
-                  className={`rounded-xl border px-5 py-2.5 font-heading text-sm transition-all duration-300 ${
-                    selectedToken === "ETH"
-                      ? "border-border bg-card-solid text-foreground"
-                      : "border-transparent text-muted"
-                  }`}
-                >
-                  ETH
-                </button>
-                <button
                   onClick={() => setSelectedToken("USDC")}
                   className={`rounded-xl border px-5 py-2.5 font-heading text-sm transition-all duration-300 ${
                     selectedToken === "USDC"
@@ -304,6 +294,17 @@ export default function VaultPage() {
                   }`}
                 >
                   USDC
+                </button>
+                <button
+                  onClick={() => setSelectedToken("ETH")}
+                  className={`rounded-xl border px-5 py-2.5 font-heading text-sm transition-all duration-300 ${
+                    selectedToken === "ETH"
+                      ? "border-border bg-card-solid text-foreground"
+                      : "border-transparent text-muted"
+                  }`}
+                >
+                  ETH (Base)
+                  <span className="ml-1.5 text-[10px] text-muted/60">Soon</span>
                 </button>
               </div>
 

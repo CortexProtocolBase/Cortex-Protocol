@@ -102,7 +102,7 @@ export function useRedeem() {
       address: CONTRACTS.CVAULT,
       abi: vaultAbi,
       functionName: "redeem",
-      args: [parseUnits(shares, 18), receiver, receiver],
+      args: [parseUnits(shares, USDC_DECIMALS), receiver, receiver],
     });
   };
 

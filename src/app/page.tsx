@@ -208,8 +208,9 @@ function useScrollReveal() {
 /* ───────────────────────── Data ───────────────────────── */
 
 const footerLinks = [
-  { label: "GitHub", href: "https://github.com/CortexProtocolBase/Cortex-Protocol" },
-  { label: "Twitter", href: "https://x.com/CortexBase" },
+  { label: "Docs", href: "/docs", external: false },
+  { label: "GitHub", href: "https://github.com/CortexProtocolBase/Cortex-Protocol", external: true },
+  { label: "Twitter", href: "https://x.com/CortexBase", external: true },
 ];
 
 /* ───────────────────────── Terminal sequences ───────────────────────── */
@@ -711,17 +712,27 @@ export default function Home() {
           </p>
 
           <nav className="flex flex-wrap gap-5">
-            {footerLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cursor-pointer text-sm text-muted transition-colors duration-200 hover:text-foreground"
-              >
-                {link.label}
-              </a>
-            ))}
+            {footerLinks.map((link) =>
+              link.external ? (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cursor-pointer text-sm text-muted transition-colors duration-200 hover:text-foreground"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="cursor-pointer text-sm text-muted transition-colors duration-200 hover:text-foreground"
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
           </nav>
 
           <p className="text-xs text-muted">

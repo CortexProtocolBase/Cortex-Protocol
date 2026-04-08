@@ -153,6 +153,7 @@ export const mockGovernance: GovernanceResponse = {
     active: 2,
     totalVotesCast: 14_200_000,
   },
+  feesCollected: 247_832,
 };
 
 // ─── Staking ─────────────────────────────────────────────────────────

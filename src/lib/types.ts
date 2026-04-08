@@ -239,6 +239,7 @@ export interface GovernanceResponse {
     active: number;
     totalVotesCast: number;
   };
+  feesCollected?: number;
 }
 
 export interface StakingInfoResponse {

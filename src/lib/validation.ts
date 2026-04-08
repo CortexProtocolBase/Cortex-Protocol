@@ -14,8 +14,8 @@ export const paginationSchema = z.object({
 export const tradeFilterSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
-  tier: z.enum(["Core", "Mid-Risk", "Degen"]).optional(),
-  type: z.enum(["Swap", "Add LP", "Remove LP", "Stake", "Unstake"]).optional(),
+  tier: z.string().optional(),
+  type: z.string().optional(),
 });
 
 export const tradeIdSchema = z.string().uuid("Invalid trade ID");

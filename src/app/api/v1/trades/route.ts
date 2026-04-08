@@ -51,12 +51,26 @@ export async function GET(request: Request) {
       .order("timestamp", { ascending: false });
 
     if (tierFilter) {
-      const dbTier = Object.entries(TIER_LABELS).find(([, v]) => v === tierFilter)?.[0];
+      // Accept both display names ("Core") and db keys ("core")
+      const lowerTier = tierFilter.toLowerCase();
+      const dbTier = Object.keys(TIER_LABELS).find((k) => k === lowerTier)
+        ?? Object.entries(TIER_LABELS).find(([, v]) => v === tierFilter)?.[0];
       if (dbTier) query = query.eq("tier", dbTier);
     }
     if (typeFilter) {
-      const dbType = Object.entries(ACTION_LABELS).find(([, v]) => v === typeFilter)?.[0];
-      if (dbType) query = query.eq("action_type", dbType);
+      // Accept comma-separated values (e.g. "add_lp,remove_lp") and single values
+      const types = typeFilter.split(",").map((t) => t.trim()).filter(Boolean);
+      const dbTypes = types.map((t) => {
+        const lower = t.toLowerCase();
+        return Object.keys(ACTION_LABELS).find((k) => k === lower)
+          ?? Object.entries(ACTION_LABELS).find(([, v]) => v === t)?.[0]
+          ?? lower;
+      });
+      if (dbTypes.length === 1) {
+        query = query.eq("action_type", dbTypes[0]);
+      } else if (dbTypes.length > 1) {
+        query = query.in("action_type", dbTypes);
+      }
     }
 
     const from = (page - 1) * pageSize;

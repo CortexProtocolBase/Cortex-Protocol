@@ -22,7 +22,23 @@ import {
 } from "recharts";
 import WalletGate from "@/components/WalletGate";
 
-const timeFilters = ["1W", "1M", "3M", "6M", "1Y", "ALL"] as const;
+const timeFilters = ["1D", "1W", "1M", "1Y", "ALL"] as const;
+
+function filterByTimeRange(
+  data: { date: string; value: number }[],
+  filter: string,
+): { date: string; value: number }[] {
+  if (filter === "ALL") return data;
+  const now = Date.now();
+  const msMap: Record<string, number> = {
+    "1D": 1 * 24 * 60 * 60 * 1000,
+    "1W": 7 * 24 * 60 * 60 * 1000,
+    "1M": 30 * 24 * 60 * 60 * 1000,
+    "1Y": 365 * 24 * 60 * 60 * 1000,
+  };
+  const cutoff = now - (msMap[filter] ?? 0);
+  return data.filter((d) => new Date(d.date).getTime() >= cutoff);
+}
 
 /* ------------------------------------------------------------------ */
 /*  Custom Recharts tooltip                                            */
@@ -117,10 +133,27 @@ export default function DashboardPage() {
   const vaultSharePct = userPosition?.vaultSharePct ?? 0;
   const apy = vaultStats?.apy7d ?? 0;
 
-  const chartData = (performance?.monthly ?? []).map((d) => ({
-    month: new Date(d.date).toLocaleString("default", { month: "short" }),
-    value: d.value,
-  }));
+  const rawPerfData = [
+    ...(performance?.daily ?? []),
+    ...(performance?.weekly ?? []),
+    ...(performance?.monthly ?? []),
+  ]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    // deduplicate by date string
+    .filter((d, i, arr) => i === 0 || d.date !== arr[i - 1].date);
+
+  const filteredPerfData = filterByTimeRange(rawPerfData, activeFilter);
+
+  const chartData = filteredPerfData.map((d) => {
+    const dt = new Date(d.date);
+    const label =
+      activeFilter === "1D"
+        ? dt.toLocaleTimeString("default", { hour: "2-digit", minute: "2-digit" })
+        : activeFilter === "1W"
+          ? dt.toLocaleDateString("default", { weekday: "short", month: "short", day: "numeric" })
+          : dt.toLocaleDateString("default", { month: "short", day: "numeric" });
+    return { month: label, value: d.value };
+  });
 
   const tierOpacities: Record<string, number> = { Core: 1, "Mid-Risk": 0.7, Degen: 0.4 };
   const allocations = (portfolio?.tiers ?? []).map((t) => ({

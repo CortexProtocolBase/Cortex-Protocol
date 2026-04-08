@@ -20,15 +20,11 @@ const DECISION_MAP: Record<string, AiDecision> = {
 };
 
 export async function GET(request: Request) {
+  // Rate-limit by wallet if provided, otherwise by a generic key
   const wallet = getWalletFromHeaders(request.headers);
-  if (!wallet) {
-    return NextResponse.json(
-      { error: "Missing or invalid x-wallet-address header" },
-      { status: 403 }
-    );
-  }
+  const rateLimitKey = wallet ?? "public";
 
-  const { success } = rateLimit(`ai-feed:${wallet}`, 30);
+  const { success } = rateLimit(`ai-feed:${rateLimitKey}`, 30);
   if (!success) return rateLimitResponse();
 
   try {

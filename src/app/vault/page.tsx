@@ -187,10 +187,17 @@ export default function VaultPage() {
     },
   ];
 
-  const performanceData = (performance?.monthly ?? []).map((d) => ({
-    month: new Date(d.date).toLocaleString("default", { month: "short" }),
-    tvl: d.value,
-  }));
+  const performanceData = [
+    ...(performance?.daily ?? []),
+    ...(performance?.weekly ?? []),
+    ...(performance?.monthly ?? []),
+  ]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .filter((d, i, arr) => i === 0 || d.date !== arr[i - 1].date)
+    .map((d) => ({
+      month: new Date(d.date).toLocaleDateString("default", { month: "short", day: "numeric" }),
+      tvl: d.value,
+    }));
 
   const recentTransactions = (userPosition?.recentTransactions ?? []).map((tx) => ({
     type: tx.type,
@@ -441,7 +448,7 @@ export default function VaultPage() {
               Vault Performance
             </h2>
             <div className="h-72 w-full">
-              {performanceData.length > 0 ? (
+              {performanceData.length > 1 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={performanceData}>
                     <defs>
@@ -467,7 +474,9 @@ export default function VaultPage() {
                       tick={{ fontSize: 12 }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(val) => `$${val}M`}
+                      tickFormatter={(val: number) =>
+                        val >= 1e6 ? `$${(val / 1e6).toFixed(1)}M` : val >= 1e3 ? `$${(val / 1e3).toFixed(0)}k` : `$${val}`
+                      }
                     />
                     <Tooltip content={<CustomTooltip />} />
                     <Area
@@ -488,7 +497,7 @@ export default function VaultPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted text-sm">
-                  {loading ? "Loading chart\u2026" : "No performance data"}
+                  {loading ? "Loading chart\u2026" : "No performance data yet"}
                 </div>
               )}
             </div>

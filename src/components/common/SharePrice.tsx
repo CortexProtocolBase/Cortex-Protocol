@@ -1,3 +1,3 @@
-"use client";
-interface SharePriceProps { children?: React.ReactNode; className?: string; }
-export default function SharePrice({ children, className }: SharePriceProps) { return <div className={className}>{children}</div>; }
+export default function SharePrice({ value, symbol = "cVLT", className = "" }: { value: number; symbol?: string; className?: string }) {
+  return <span className={`font-mono text-foreground ${className}`}>${value.toFixed(4)} <span className="text-muted text-xs">{symbol}</span></span>;
+}

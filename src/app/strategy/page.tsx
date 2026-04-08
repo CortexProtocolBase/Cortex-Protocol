@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { showToast } from "@/components/Toast";
-import type { PortfolioResponse } from "@/lib/types";
+import type { PortfolioResponse, ReasoningFeedEntry } from "@/lib/types";
 import type { LucideIcon } from "lucide-react";
 import {
   Brain,
@@ -54,33 +54,11 @@ const strategyIcons: Record<string, LucideIcon> = {
   Aerodrome: BarChart3,
 };
 
-const decisionLog = [
-  {
-    action: "Increased Aave USDC lending position by 3%",
-    time: "2h ago",
-    icon: ArrowUpRight,
-  },
-  {
-    action: "Reduced Degen tier exposure after volatility spike",
-    time: "6h ago",
-    icon: ArrowDownRight,
-  },
-  {
-    action: "Rebalanced Aerodrome LP positions",
-    time: "12h ago",
-    icon: RefreshCw,
-  },
-  {
-    action: "Moved 2% from Mid-Risk to Core as hedge",
-    time: "1d ago",
-    icon: ShieldCheck,
-  },
-  {
-    action: "Entered new cbBTC/WETH LP on Compound",
-    time: "2d ago",
-    icon: Zap,
-  },
-];
+const decisionIconMap: Record<string, LucideIcon> = {
+  TRADE: ArrowUpRight,
+  REBALANCE: RefreshCw,
+  HOLD: ShieldCheck,
+};
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -134,6 +112,8 @@ function PieTooltipContent({
 export default function StrategyPage() {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioResponse | null>(null);
+  const [decisionLog, setDecisionLog] = useState<ReasoningFeedEntry[]>([]);
+  const [decisionLogLoading, setDecisionLogLoading] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -151,6 +131,24 @@ export default function StrategyPage() {
       }
     }
     fetchPortfolio();
+  }, []);
+
+  useEffect(() => {
+    async function fetchDecisionLog() {
+      try {
+        const res = await fetch("/api/v1/ai/reasoning-feed", {
+          headers: { "x-wallet-address": "public" },
+        });
+        if (!res.ok) throw new Error("Failed to fetch reasoning feed");
+        const json = await res.json();
+        setDecisionLog(json.data ?? []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDecisionLogLoading(false);
+      }
+    }
+    fetchDecisionLog();
   }, []);
 
   /* Derived data --------------------------------------------------- */
@@ -483,25 +481,43 @@ export default function StrategyPage() {
               AI Decision Log
             </h2>
             <div>
-              {decisionLog.map((entry, idx) => {
-                const Icon = entry.icon;
-                return (
-                  <div
-                    key={idx}
-                    className={`flex items-start gap-3 py-3 ${
-                      idx < decisionLog.length - 1
-                        ? "border-b border-border"
-                        : ""
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 text-muted mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground">{entry.action}</p>
-                      <p className="text-xs text-muted mt-0.5">{entry.time}</p>
-                    </div>
+              {decisionLogLoading ? (
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <div key={idx} className={`py-3 ${idx < 4 ? "border-b border-border" : ""}`}>
+                    <Skeleton className="h-10 w-full" />
                   </div>
-                );
-              })}
+                ))
+              ) : decisionLog.length === 0 ? (
+                <p className="text-sm text-muted py-4">No recent AI decisions.</p>
+              ) : (
+                decisionLog.map((entry, idx) => {
+                  const Icon = decisionIconMap[entry.decision] ?? Activity;
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-start gap-3 py-3 ${
+                        idx < decisionLog.length - 1
+                          ? "border-b border-border"
+                          : ""
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 text-muted mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-primary bg-primary/10 rounded-full px-2 py-0.5">
+                            {entry.decision}
+                          </span>
+                          <span className="text-xs text-muted">
+                            Cycle #{entry.cycle} &middot; {entry.confidence}% confidence
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground mt-1">{entry.reasoning}</p>
+                        <p className="text-xs text-muted mt-0.5">{entry.time}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </section>

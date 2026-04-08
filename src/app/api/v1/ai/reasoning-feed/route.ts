@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { mockReasoningFeed } from "@/lib/mock-data";
 import { getWalletFromHeaders } from "@/lib/token-gate";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import type { ApiResponse, ReasoningFeedEntry, AiDecision } from "@/lib/types";
@@ -57,9 +56,8 @@ export async function GET(request: Request) {
   } catch (err) {
     console.error("[ai/reasoning-feed] Supabase query failed:", err);
     const response: ApiResponse<ReasoningFeedEntry[]> = {
-      data: mockReasoningFeed,
+      data: [],
       timestamp: new Date().toISOString(),
-      cached: true,
     };
     return NextResponse.json(response);
   }

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { mockPerformance } from "@/lib/mock-data";
 import type { ApiResponse, PerformanceResponse } from "@/lib/types";
 
 export async function GET() {
@@ -53,7 +52,7 @@ export async function GET() {
       daily,
       weekly,
       monthly,
-      benchmarks: mockPerformance.benchmarks,
+      benchmarks: [],
       totalReturn,
       totalReturnPct,
     };
@@ -65,10 +64,17 @@ export async function GET() {
     return NextResponse.json(response);
   } catch (err) {
     console.error("[performance] Supabase query failed:", err);
+    const data: PerformanceResponse = {
+      daily: [],
+      weekly: [],
+      monthly: [],
+      benchmarks: [],
+      totalReturn: 0,
+      totalReturnPct: 0,
+    };
     const response: ApiResponse<PerformanceResponse> = {
-      data: mockPerformance,
+      data,
       timestamp: new Date().toISOString(),
-      cached: true,
     };
     return NextResponse.json(response);
   }

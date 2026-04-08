@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { mockAiInsights } from "@/lib/mock-data";
 import { getWalletFromHeaders } from "@/lib/token-gate";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import type { ApiResponse, AiInsightsResponse } from "@/lib/types";
@@ -32,7 +31,7 @@ export async function GET(request: Request) {
 
     const sentiments = sentimentData
       ? Object.entries(sentimentData).map(([asset, score]) => ({ asset, score }))
-      : mockAiInsights.sentiments;
+      : [];
 
     const overallScore = sentiments.reduce((a, s) => a + s.score, 0) / sentiments.length;
     const regime = overallScore > 0.4 ? "Bullish" : overallScore < -0.2 ? "Bearish" : overallScore > 0.1 ? "Neutral" : "Volatile";
@@ -61,10 +60,17 @@ export async function GET(request: Request) {
     return NextResponse.json(response);
   } catch (err) {
     console.error("[ai/insights] Supabase query failed:", err);
+    const data: AiInsightsResponse = {
+      confidence: 0,
+      marketRegime: "Neutral",
+      nextRebalanceMinutes: 0,
+      cyclesToday: 0,
+      sentiments: [],
+      marketSummary: "AI agent has not run yet. No reasoning data available.",
+    };
     const response: ApiResponse<AiInsightsResponse> = {
-      data: mockAiInsights,
+      data,
       timestamp: new Date().toISOString(),
-      cached: true,
     };
     return NextResponse.json(response);
   }

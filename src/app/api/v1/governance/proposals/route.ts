@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { mockGovernance } from "@/lib/mock-data";
 import type { ApiResponse, GovernanceResponse, ProposalStatus } from "@/lib/types";
 
 function timeRemaining(endDate: string): string | null {
@@ -44,13 +43,25 @@ export async function GET() {
     };
 
     const data: GovernanceResponse = {
-      tokenPrice: mockGovernance.tokenPrice,
-      marketCap: mockGovernance.marketCap,
+      tokenPrice: 0,
+      marketCap: 0,
       totalSupply: 1_000_000_000,
       proposals: mapped,
-      parameters: mockGovernance.parameters,
+      parameters: [
+        { name: "Core Allocation", value: "70%", range: "50-90%" },
+        { name: "Mid-Risk Allocation", value: "20%", range: "5-35%" },
+        { name: "Degen Allocation", value: "10%", range: "0-15%" },
+        { name: "Max Slippage", value: "1.5%", range: "0.5-5%" },
+        { name: "Management Fee", value: "2%", range: "0-5%" },
+        { name: "Performance Fee", value: "20%", range: "0-30%" },
+        { name: "Withdrawal Fee", value: "0.5%", range: "0-2%" },
+        { name: "AI Trade Rate", value: "20/hour", range: "1-50" },
+        { name: "Quorum", value: "4%", range: "1-10%" },
+        { name: "Voting Period", value: "3 days", range: "1-14 days" },
+        { name: "Timelock", value: "24h", range: "6-72h" },
+      ],
       stats,
-      feesCollected: mockGovernance.feesCollected,
+      feesCollected: 0,
     };
 
     const response: ApiResponse<GovernanceResponse> = {
@@ -60,10 +71,30 @@ export async function GET() {
     return NextResponse.json(response);
   } catch (err) {
     console.error("[governance/proposals] Supabase query failed:", err);
+    const data: GovernanceResponse = {
+      tokenPrice: 0,
+      marketCap: 0,
+      totalSupply: 1_000_000_000,
+      proposals: [],
+      parameters: [
+        { name: "Core Allocation", value: "70%", range: "50-90%" },
+        { name: "Mid-Risk Allocation", value: "20%", range: "5-35%" },
+        { name: "Degen Allocation", value: "10%", range: "0-15%" },
+        { name: "Max Slippage", value: "1.5%", range: "0.5-5%" },
+        { name: "Management Fee", value: "2%", range: "0-5%" },
+        { name: "Performance Fee", value: "20%", range: "0-30%" },
+        { name: "Withdrawal Fee", value: "0.5%", range: "0-2%" },
+        { name: "AI Trade Rate", value: "20/hour", range: "1-50" },
+        { name: "Quorum", value: "4%", range: "1-10%" },
+        { name: "Voting Period", value: "3 days", range: "1-14 days" },
+        { name: "Timelock", value: "24h", range: "6-72h" },
+      ],
+      stats: { totalProposals: 0, passed: 0, rejected: 0, active: 0, totalVotesCast: 0 },
+      feesCollected: 0,
+    };
     const response: ApiResponse<GovernanceResponse> = {
-      data: mockGovernance,
+      data,
       timestamp: new Date().toISOString(),
-      cached: true,
     };
     return NextResponse.json(response);
   }

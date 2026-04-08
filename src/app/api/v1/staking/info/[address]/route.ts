@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { mockStakingInfo } from "@/lib/mock-data";
 import { walletAddressSchema } from "@/lib/validation";
 import type { ApiResponse, StakingInfoResponse } from "@/lib/types";
 
@@ -36,8 +35,8 @@ export async function GET(
           lockDurationDays: position.lock_duration,
           multiplier: Number(position.multiplier),
           effectiveStake: Number(position.amount) * Number(position.multiplier),
-          pendingRewards: 0.142,
-          pendingRewardsUsd: 483.4,
+          pendingRewards: Number(position.pending_rewards ?? 0),
+          pendingRewardsUsd: Number(position.pending_rewards_usd ?? 0),
           unlockDate: position.unlocks_at ?? "",
         }
       : null;
@@ -45,10 +44,15 @@ export async function GET(
     const data: StakingInfoResponse = {
       totalStaked,
       totalStakedUsd: totalStaked * 0.42,
-      currentApr: 12.4,
+      currentApr: 0,
       userPosition,
-      rewardHistory: mockStakingInfo.rewardHistory,
-      lockTiers: mockStakingInfo.lockTiers,
+      rewardHistory: [],
+      lockTiers: [
+        { label: "No Lock", days: 0, multiplier: 1 },
+        { label: "1 Month", days: 30, multiplier: 1.5 },
+        { label: "3 Months", days: 90, multiplier: 2 },
+        { label: "6 Months", days: 180, multiplier: 2.5 },
+      ],
     };
 
     const response: ApiResponse<StakingInfoResponse> = {
@@ -58,10 +62,22 @@ export async function GET(
     return NextResponse.json(response);
   } catch (err) {
     console.error("[staking/info] Supabase query failed:", err);
+    const data: StakingInfoResponse = {
+      totalStaked: 0,
+      totalStakedUsd: 0,
+      currentApr: 0,
+      userPosition: null,
+      rewardHistory: [],
+      lockTiers: [
+        { label: "No Lock", days: 0, multiplier: 1 },
+        { label: "1 Month", days: 30, multiplier: 1.5 },
+        { label: "3 Months", days: 90, multiplier: 2 },
+        { label: "6 Months", days: 180, multiplier: 2.5 },
+      ],
+    };
     const response: ApiResponse<StakingInfoResponse> = {
-      data: mockStakingInfo,
+      data,
       timestamp: new Date().toISOString(),
-      cached: true,
     };
     return NextResponse.json(response);
   }

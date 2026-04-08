@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { mockTrades } from "@/lib/mock-data";
 import { tradeIdSchema } from "@/lib/validation";
 import type { ApiResponse, TradeResponse, TradeType, Tier } from "@/lib/types";
 
@@ -55,14 +54,6 @@ export async function GET(
     return NextResponse.json(response);
   } catch (err) {
     console.error("[trades/[id]] Supabase query failed:", err);
-    const trade = mockTrades.find((t) => t.id === id);
-    if (!trade) {
-      return NextResponse.json({ error: "Trade not found" }, { status: 404 });
-    }
-    const response: ApiResponse<TradeResponse> = {
-      data: trade,
-      timestamp: new Date().toISOString(),
-    };
-    return NextResponse.json(response);
+    return NextResponse.json({ error: "Trade not found" }, { status: 404 });
   }
 }

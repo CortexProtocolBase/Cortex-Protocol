@@ -149,12 +149,21 @@ export default function DashboardPage() {
           </h1>
         </div>
 
+        {/* ----- No Position Banner ----- */}
+        {!loading && currentValue === 0 && address && (
+          <div className="mt-8 bg-card border border-border rounded-2xl p-8 text-center">
+            <p className="font-heading text-lg font-semibold text-foreground mb-2">No vault position yet</p>
+            <p className="text-sm text-muted mb-4">Deposit ETH or USDC into the CORTEX Vault to start earning AI-managed yield.</p>
+            <a href="/vault" className="inline-flex items-center bg-foreground text-background rounded-lg px-5 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity">Go to Vault</a>
+          </div>
+        )}
+
         {/* ----- Portfolio Overview Cards ----- */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
           <div className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover hover:bg-card-hover transition-all duration-300">
             <p className="text-muted text-sm mb-1">Total Balance</p>
             <p className="font-heading text-2xl font-bold">
-              {loading ? "—" : `$${currentValue.toLocaleString()}`}
+              {loading ? "—" : currentValue > 0 ? `$${currentValue.toLocaleString()}` : "$0.00"}
             </p>
             {profitLossPct > 0 && (
               <span className="text-primary text-sm mt-1 inline-block">
@@ -173,7 +182,7 @@ export default function DashboardPage() {
           <div className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover hover:bg-card-hover transition-all duration-300">
             <p className="text-muted text-sm mb-1">Total Profit</p>
             <p className="font-heading text-2xl font-bold">
-              {loading ? "—" : `${profitLoss >= 0 ? "+" : ""}$${profitLoss.toLocaleString()}`}
+              {loading ? "—" : profitLoss !== 0 ? `${profitLoss >= 0 ? "+" : ""}$${profitLoss.toLocaleString()}` : "$0.00"}
             </p>
             {profitLossPct !== 0 && (
               <span className={`text-sm mt-1 inline-block ${profitLossPct >= 0 ? "text-primary" : "text-red-400"}`}>
@@ -185,7 +194,7 @@ export default function DashboardPage() {
           <div className="bg-card border border-border rounded-2xl p-6 hover:border-border-hover hover:bg-card-hover transition-all duration-300">
             <p className="text-muted text-sm mb-1">Current APY</p>
             <p className="font-heading text-2xl font-bold">
-              {loading ? "—" : `${apy.toFixed(1)}%`}
+              {loading ? "—" : apy > 0 ? `${apy.toFixed(1)}%` : "0.0%"}
             </p>
           </div>
         </div>

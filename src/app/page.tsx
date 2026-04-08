@@ -472,18 +472,26 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  const formatTvl = (tvl: number) => {
+    if (tvl >= 1e9) return `$${(tvl / 1e9).toFixed(2)}B`;
+    if (tvl >= 1e6) return `$${(tvl / 1e6).toFixed(1)}M`;
+    if (tvl >= 1e3) return `$${(tvl / 1e3).toFixed(1)}K`;
+    if (tvl > 0) return `$${tvl.toFixed(0)}`;
+    return "$0";
+  };
+
   const stats = vaultStats
     ? [
-        { value: `$${(vaultStats.tvl / 1e6).toFixed(1)}M`, label: "TVL on Base" },
-        { value: `${vaultStats.apy7d.toFixed(1)}%`, label: "avg. APY" },
-        { value: "12", label: "active strategies" },
-        { value: vaultStats.depositors.toLocaleString(), label: "depositors" },
+        { value: formatTvl(vaultStats.tvl), label: "TVL on Base" },
+        { value: vaultStats.apy7d > 0 ? `${vaultStats.apy7d.toFixed(1)}%` : "0%", label: "avg. APY" },
+        { value: "7", label: "strategies" },
+        { value: vaultStats.depositors > 0 ? vaultStats.depositors.toLocaleString() : "0", label: "depositors" },
       ]
     : [
-        { value: "$—", label: "TVL on Base" },
-        { value: "—%", label: "avg. APY" },
-        { value: "12", label: "active strategies" },
-        { value: "—", label: "depositors" },
+        { value: "$0", label: "TVL on Base" },
+        { value: "0%", label: "avg. APY" },
+        { value: "7", label: "strategies" },
+        { value: "0", label: "depositors" },
       ];
 
   return (

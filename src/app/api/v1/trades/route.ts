@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { mockTrades, MOCK_TOTAL_TRADES } from "@/lib/mock-data";
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/constants";
 import { tradeFilterSchema } from "@/lib/validation";
 import type { PaginatedResponse, TradeResponse, Tier, TradeType } from "@/lib/types";
@@ -90,15 +89,9 @@ export async function GET(request: Request) {
     return NextResponse.json(response);
   } catch (err) {
     console.error("[trades] Supabase query failed:", err);
-    let filtered = [...mockTrades];
-    if (tierFilter) filtered = filtered.filter((t) => t.tier === tierFilter);
-    if (typeFilter) filtered = filtered.filter((t) => t.type === typeFilter);
-    const total = tierFilter || typeFilter ? filtered.length : MOCK_TOTAL_TRADES;
-    const start = (page - 1) * pageSize;
-
     const response: PaginatedResponse<TradeResponse> = {
-      data: filtered.slice(start, start + pageSize),
-      total,
+      data: [],
+      total: 0,
       page,
       pageSize,
       timestamp: new Date().toISOString(),

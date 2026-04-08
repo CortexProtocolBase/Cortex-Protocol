@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { mockUserPosition } from "@/lib/mock-data";
 import { walletAddressSchema } from "@/lib/validation";
 import type { ApiResponse, UserPositionResponse } from "@/lib/types";
 
@@ -94,11 +93,20 @@ export async function GET(
     return NextResponse.json(response);
   } catch (err) {
     console.error("[vault/user] Supabase query failed:", err);
-    // Fallback to mock data
+    const data: UserPositionResponse = {
+      walletAddress: address,
+      depositedAmount: 0,
+      currentValue: 0,
+      profitLoss: 0,
+      profitLossPct: 0,
+      cvaultShares: 0,
+      vaultSharePct: 0,
+      entryDate: "",
+      recentTransactions: [],
+    };
     const response: ApiResponse<UserPositionResponse> = {
-      data: { ...mockUserPosition, walletAddress: address },
+      data,
       timestamp: new Date().toISOString(),
-      cached: true,
     };
     return NextResponse.json(response);
   }

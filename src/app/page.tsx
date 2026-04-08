@@ -208,7 +208,6 @@ function useScrollReveal() {
 /* ───────────────────────── Data ───────────────────────── */
 
 const footerLinks = [
-  { label: "Docs", href: "#" },
   { label: "GitHub", href: "https://github.com/CortexProtocolBase/Cortex-Protocol" },
   { label: "Twitter", href: "https://x.com/CortexBase" },
 ];

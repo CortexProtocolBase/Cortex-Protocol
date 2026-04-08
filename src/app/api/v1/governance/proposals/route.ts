@@ -50,6 +50,7 @@ export async function GET() {
       proposals: mapped,
       parameters: mockGovernance.parameters,
       stats,
+      feesCollected: mockGovernance.feesCollected,
     };
 
     const response: ApiResponse<GovernanceResponse> = {

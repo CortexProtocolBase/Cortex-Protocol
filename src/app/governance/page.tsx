@@ -352,7 +352,9 @@ export default function GovernancePage() {
               <p className="text-muted text-sm">
                 Total fees collected:{" "}
                 <span className="text-foreground font-heading font-bold">
-                  $247,832
+                  {data?.feesCollected != null
+                    ? `$${data.feesCollected.toLocaleString()}`
+                    : "\u2014"}
                 </span>
               </p>
             </div>

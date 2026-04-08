@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, ExternalLink, Settings, Copy, Check } from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 
 const navLinks = [
@@ -19,15 +19,38 @@ const navLinks = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
   const {
     connected,
     walletAddress,
+    fullWalletAddress,
     networkStatus,
     disconnect,
     setShowModal,
   } = useWallet();
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [dropdownOpen]);
+
+  const handleCopy = () => {
+    if (!fullWalletAddress) return;
+    navigator.clipboard.writeText(fullWalletAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const walletButton = connected ? (
     networkStatus === "wrong_network" ? (
@@ -38,17 +61,61 @@ export default function Navbar() {
         Wrong Network
       </button>
     ) : (
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-medium text-foreground bg-white/[0.06] px-3 py-2 rounded-lg">
-          {walletAddress}
-        </span>
+      <div className="relative" ref={dropdownRef}>
+        {/* Wallet address button */}
         <button
-          onClick={() => disconnect()}
-          className="cursor-pointer text-muted hover:text-foreground transition-colors duration-300 p-2"
-          aria-label="Disconnect wallet"
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="cursor-pointer flex items-center gap-2 text-sm font-medium text-foreground bg-white/[0.06] px-3 py-2 rounded-lg hover:bg-white/[0.08] transition-colors duration-200"
         >
-          <LogOut size={16} />
+          <span className="font-mono">{walletAddress}</span>
         </button>
+
+        {/* Dropdown */}
+        {dropdownOpen && (
+          <div className="absolute right-0 mt-2 w-52 bg-[#0e0e11] border border-border rounded-xl shadow-xl overflow-hidden z-50">
+            {/* Copy Address */}
+            <button
+              onClick={handleCopy}
+              className="cursor-pointer w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-white/[0.04] transition-colors"
+            >
+              {copied ? <Check size={15} className="text-primary" /> : <Copy size={15} />}
+              {copied ? "Copied!" : "Copy Address"}
+            </button>
+
+            {/* BaseScan */}
+            <a
+              href={`https://basescan.org/address/${fullWalletAddress}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setDropdownOpen(false)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-muted hover:text-foreground hover:bg-white/[0.04] transition-colors"
+            >
+              <ExternalLink size={15} />
+              View on BaseScan
+            </a>
+
+            {/* Settings (greyed out) */}
+            <div className="flex items-center gap-3 px-4 py-3 text-sm text-muted/40 cursor-default">
+              <Settings size={15} />
+              Settings
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-border" />
+
+            {/* Disconnect */}
+            <button
+              onClick={() => {
+                setDropdownOpen(false);
+                disconnect();
+              }}
+              className="cursor-pointer w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-white/[0.04] transition-colors"
+            >
+              <LogOut size={15} />
+              Disconnect
+            </button>
+          </div>
+        )}
       </div>
     )
   ) : (

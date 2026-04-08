@@ -147,15 +147,6 @@ export default function DashboardPage() {
           <h1 className="font-heading text-3xl font-bold tracking-tight">
             Dashboard
           </h1>
-
-          <button
-            onClick={handleCopy}
-            disabled={!address}
-            className="cursor-pointer flex items-center gap-2 bg-card-solid border border-border rounded-lg px-3 py-1.5 text-sm text-muted hover:text-foreground transition-colors duration-200 disabled:opacity-50 disabled:cursor-default"
-          >
-            <span className="font-mono">{displayAddress}</span>
-            {address && <Copy size={14} className={copied ? "text-primary" : ""} />}
-          </button>
         </div>
 
         {/* ----- Portfolio Overview Cards ----- */}

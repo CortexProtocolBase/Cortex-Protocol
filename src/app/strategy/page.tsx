@@ -154,17 +154,41 @@ export default function StrategyPage() {
 
   /* Derived data --------------------------------------------------- */
 
+  const formatValue = (v: number) => {
+    if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
+    if (v >= 1e6) return `$${(v / 1e6).toFixed(2)}M`;
+    if (v >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
+    if (v > 0) return `$${v.toFixed(0)}`;
+    return "$0";
+  };
+
+  const formatTimeAgo = (iso: string) => {
+    if (!iso) return "--";
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 0) {
+      const absDiff = Math.abs(diff);
+      if (absDiff < 60) return `~${absDiff}s`;
+      if (absDiff < 3600) return `~${Math.floor(absDiff / 60)} min`;
+      return `~${Math.floor(absDiff / 3600)}h`;
+    }
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
   const allocationData = (portfolio?.tiers ?? []).map((t) => ({
     name: t.name,
     value: t.allocationPct,
     color: tierColors[t.name] ?? "#3B82F6",
-    amount: `$${(t.valueUsd / 1e6).toFixed(2)}M`,
+    amount: formatValue(t.valueUsd),
     description: tierDescriptions[t.name] ?? "",
   }));
 
-  const totalValue = portfolio
-    ? `$${(portfolio.tiers.reduce((a, t) => a + t.valueUsd, 0) / 1e6).toFixed(1)}M`
-    : "--";
+  const rawTotal = portfolio
+    ? portfolio.tiers.reduce((a, t) => a + t.valueUsd, 0)
+    : 0;
+  const totalValue = rawTotal > 0 ? formatValue(rawTotal) : "$0";
 
   const strategies = (portfolio?.allocations ?? []).map((a) => ({
     name: a.strategyName,
@@ -232,7 +256,7 @@ export default function StrategyPage() {
               <Skeleton className="h-6 w-16" />
             ) : (
               <p className="text-lg font-semibold text-foreground">
-                {portfolio?.lastRebalance ?? "--"}
+                {portfolio?.lastRebalance ? formatTimeAgo(portfolio.lastRebalance) : "--"}
               </p>
             )}
           </div>
@@ -248,7 +272,7 @@ export default function StrategyPage() {
               <Skeleton className="h-6 w-16" />
             ) : (
               <p className="text-lg font-semibold text-foreground">
-                {portfolio?.nextRebalance ?? "--"}
+                {portfolio?.nextRebalance ? formatTimeAgo(portfolio.nextRebalance) : "--"}
               </p>
             )}
           </div>

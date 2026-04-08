@@ -155,16 +155,16 @@ export default function VaultPage() {
   const balance = selectedToken === "ETH"
     ? (ethBalance ? parseFloat(formatUnits(ethBalance.value, 18)).toFixed(4) : "0")
     : (usdcBalance ? parseFloat(formatUnits(usdcBalance as bigint, 6)).toLocaleString() : "0");
+  const sharePrice = vaultStats?.sharePriceUsd ?? 0;
+  const tvl = vaultStats?.tvl ?? 0;
   const exchangeRate =
-    selectedToken === "ETH"
-      ? "1 ETH = 0.0135% vault share"
-      : "1 USDC = 0.0000081% vault share";
+    sharePrice > 0
+      ? `1 ${selectedToken} = ${(1 / sharePrice).toFixed(4)} cVLT shares`
+      : `1 ${selectedToken} = -- cVLT shares`;
 
   const estimatedShare =
-    amount && !isNaN(parseFloat(amount.replace(/,/g, "")))
-      ? selectedToken === "ETH"
-        ? (parseFloat(amount) * 0.0135).toFixed(3)
-        : (parseFloat(amount.replace(/,/g, "")) * 0.0000081).toFixed(6)
+    amount && !isNaN(parseFloat(amount.replace(/,/g, ""))) && tvl > 0
+      ? ((parseFloat(amount.replace(/,/g, "")) / tvl) * 100).toFixed(6)
       : "0";
 
   const computedVaultStats = [

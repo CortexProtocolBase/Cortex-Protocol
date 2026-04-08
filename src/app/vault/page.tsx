@@ -194,9 +194,8 @@ export default function VaultPage() {
       .catch(() => showToast("Failed to load position", "error"));
   }, [address]);
 
-  const balance = selectedToken === "ETH"
-    ? (ethBalance ? parseFloat(formatUnits(ethBalance.value, 18)).toFixed(4) : "0")
-    : (usdcBalance ? parseFloat(formatUnits(usdcBalance as bigint, 6)).toLocaleString() : "0");
+  const usdcBal = usdcBalance ? parseFloat(formatUnits(usdcBalance as bigint, 6)) : 0;
+  const shareBal = vaultSharesBigInt ? parseFloat(formatUnits(vaultSharesBigInt as bigint, 6)) : 0;
   const sharePrice = vaultStats?.sharePriceUsd ?? 0;
   const tvl = vaultStats?.tvl ?? 0;
   const exchangeRate =
@@ -354,7 +353,7 @@ export default function VaultPage() {
                     className="w-full rounded-xl border border-border bg-background px-4 py-4 font-body text-lg text-foreground placeholder-muted/50 outline-none transition-all duration-300 focus:border-border-hover"
                   />
                   <button
-                    onClick={() => setAmount(balance)}
+                    onClick={() => setAmount(activeTab === "deposit" ? String(usdcBal) : String(shareBal))}
                     className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer font-body text-sm text-primary"
                   >
                     MAX
@@ -364,7 +363,9 @@ export default function VaultPage() {
 
               {/* Balance */}
               <p className="mb-6 font-body text-sm text-muted">
-                Balance: {balance} {selectedToken}
+                {activeTab === "deposit"
+                  ? `Balance: ${usdcBal.toLocaleString()} USDC`
+                  : `cVault Shares: ${shareBal.toLocaleString()} cVLT`}
               </p>
 
               {/* Info Box */}

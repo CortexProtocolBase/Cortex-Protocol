@@ -236,7 +236,11 @@ export default function StakePage() {
                     />
                     <span className="text-sm text-muted mr-2">CORTEX</span>
                     <button
-                      onClick={() => setAmount("3200")}
+                      onClick={() => {
+                        if (cortexBalance) {
+                          setAmount(parseFloat(formatUnits(cortexBalance as bigint, 18)).toString());
+                        }
+                      }}
                       className="cursor-pointer text-xs text-primary font-medium bg-primary/10 rounded-md px-2.5 py-1 hover:bg-primary/20 transition-colors duration-200"
                     >
                       MAX

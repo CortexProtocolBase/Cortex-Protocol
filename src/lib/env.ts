@@ -9,7 +9,7 @@ const serverEnvSchema = z.object({
   CRON_SECRET: z.string().min(1, "CRON_SECRET is required").optional(),
   BASE_RPC_URL: z.string().url("BASE_RPC_URL must be a valid URL").optional(),
   AI_AGENT_PRIVATE_KEY: z.string().startsWith("0x", "AI_AGENT_PRIVATE_KEY must start with 0x").optional(),
-  ANTHROPIC_API_KEY: z.string().min(1, "ANTHROPIC_API_KEY is required").optional(),
+  GROQ_API_KEY: z.string().min(1, "GROQ_API_KEY is required").optional(),
   UPSTASH_REDIS_REST_URL: z.string().url("UPSTASH_REDIS_REST_URL must be a valid URL").optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 });

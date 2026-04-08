@@ -1,9 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Groq from "groq-sdk";
 import type { MarketSnapshot, AgentDecision, TradeProposal } from "./types";
 import { TIER_DEFAULTS, GOVERNANCE } from "@/lib/constants";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 const SYSTEM_PROMPT = `You are the CORTEX AI Agent — an autonomous portfolio manager for a DeFi vault on Base L2.
@@ -65,14 +65,16 @@ Tier Bounds:
 Analyze the market and decide: HOLD, TRADE, or REBALANCE. Return JSON only.`;
 
   try {
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userMessage },
+      ],
     });
 
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
+    const text = response.choices[0]?.message?.content ?? "";
     // Extract JSON from response (handle markdown code blocks)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON in response");
@@ -94,7 +96,7 @@ Analyze the market and decide: HOLD, TRADE, or REBALANCE. Return JSON only.`;
       tradesExecuted: [],
     };
   } catch (err) {
-    console.error("[analyzer] Claude API error:", err);
+    console.error("[analyzer] Groq API error:", err);
     // Fallback: conservative HOLD
     return {
       decision: "hold",

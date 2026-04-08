@@ -45,10 +45,25 @@ export async function GET(request: Request) {
     const toStakers = totalFee * (FEE_DISTRIBUTION.STAKERS_PCT / 100);
     const toTreasury = totalFee * (FEE_DISTRIBUTION.TREASURY_PCT / 100);
 
-    // Log the fee calculation (in production, call Treasury.distributeFees())
     console.log(
       `[cron/fees] Management: $${managementFee.toFixed(2)}, Performance: $${performanceFee.toFixed(2)}, Stakers: $${toStakers.toFixed(2)}, Treasury: $${toTreasury.toFixed(2)}`
     );
+
+    // Store fee record in Supabase for tracking
+    if (totalFee > 0.01) {
+      await supabaseAdmin.from("fee_records").insert({
+        timestamp: new Date().toISOString(),
+        management_fee: parseFloat(managementFee.toFixed(6)),
+        performance_fee: parseFloat(performanceFee.toFixed(6)),
+        total_fee: parseFloat(totalFee.toFixed(6)),
+        to_stakers: parseFloat(toStakers.toFixed(6)),
+        to_treasury: parseFloat(toTreasury.toFixed(6)),
+        tvl: tvl,
+        share_price: current.share_price,
+      }).then(({ error }) => {
+        if (error) console.error("[cron/fees] Failed to store fee record:", error.message);
+      });
+    }
 
     return NextResponse.json({
       ok: true,

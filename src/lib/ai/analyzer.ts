@@ -74,10 +74,11 @@ Analyze the market and decide: HOLD, TRADE, or REBALANCE. Return JSON only.`;
       ],
     });
 
-    const text = response.choices[0]?.message?.content ?? "";
-    // Extract JSON from response (handle markdown code blocks)
+    const raw = response.choices[0]?.message?.content ?? "";
+    // Strip markdown code blocks before extracting JSON
+    const text = raw.replace(/```(?:json)?\s*/g, "").replace(/```/g, "");
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON in response");
+    if (!jsonMatch) throw new Error("No JSON in response: " + raw.slice(0, 200));
 
     const parsed = JSON.parse(jsonMatch[0]);
 

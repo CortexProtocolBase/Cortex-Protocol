@@ -33,7 +33,7 @@ export async function runAgentCycle(): Promise<CycleResult> {
   console.log(`[agent] Decision: ${decision.decision} (confidence: ${decision.confidence})`);
 
   // 3. Validate against guardrails
-  const guardrailResult = validateDecision(decision, snapshot);
+  const guardrailResult = await validateDecision(decision, snapshot);
 
   let tradesExecuted = decision.tradesExecuted;
   let gasUsed = 0;

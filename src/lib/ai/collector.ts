@@ -85,12 +85,41 @@ function computeSentiment(prices: Record<string, number>): Record<string, number
   };
 }
 
+// ─── Fetch real allocations from last vault snapshot ────────────────
+
+async function fetchAllocations(): Promise<{ core: number; mid: number; degen: number }> {
+  try {
+    const { supabaseAdmin } = await import("@/lib/supabase");
+    const { data } = await supabaseAdmin
+      .from("vault_snapshots")
+      .select("core_alloc, mid_alloc, degen_alloc")
+      .order("timestamp", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (data) {
+      const core = Number(data.core_alloc) / 100;
+      const mid = Number(data.mid_alloc) / 100;
+      const degen = Number(data.degen_alloc) / 100;
+      // Sanity check — if they sum to ~1, use them
+      if (core + mid + degen > 0.5 && core + mid + degen < 1.5) {
+        return { core, mid, degen };
+      }
+    }
+  } catch (err) {
+    console.error("[collector] Failed to fetch allocations:", err);
+  }
+  // Fallback to defaults only if DB has no data
+  return { core: 0.70, mid: 0.20, degen: 0.10 };
+}
+
 // ─── Main collector function ────────────────────────────────────────
 
 export async function collectMarketData(): Promise<MarketSnapshot> {
-  const [prices, vaultState] = await Promise.all([
+  const [prices, vaultState, allocations] = await Promise.all([
     fetchPrices(),
     fetchVaultState(),
+    fetchAllocations(),
   ]);
 
   const sentiments = computeSentiment(prices);
@@ -99,11 +128,7 @@ export async function collectMarketData(): Promise<MarketSnapshot> {
     timestamp: new Date().toISOString(),
     vaultTvl: vaultState.tvl,
     sharePrice: vaultState.sharePrice,
-    allocations: {
-      core: 0.70,
-      mid: 0.20,
-      degen: 0.10,
-    },
+    allocations,
     prices,
     sentiments,
   };

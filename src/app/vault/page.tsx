@@ -65,18 +65,36 @@ export default function VaultPage() {
   const { redeem, isPending: isRedeeming, isSuccess: redeemSuccess, isConfirming: redeemConfirming } = useRedeem();
   const { data: vaultSharesBigInt } = useVaultShares(address);
 
-  // After approval succeeds, trigger the deposit
+  // After approval succeeds, auto-trigger the deposit
+  const [pendingDeposit, setPendingDeposit] = useState(false);
+
   useEffect(() => {
-    if (approveSuccess && amount && address && selectedToken === "USDC") {
-      deposit(amount, address);
+    if (approveSuccess && pendingDeposit && amount && address && selectedToken === "USDC") {
+      setPendingDeposit(false);
+      deposit(amount.replace(/,/g, ""), address);
+      showToast("Depositing...", "info");
     }
   }, [approveSuccess]);
 
-  // Toast on deposit/redeem success
+  // Refresh data after deposit/redeem success
+  const refreshPosition = () => {
+    if (!address) return;
+    fetch(`/api/v1/vault/user/${address}`)
+      .then((r) => r.json())
+      .then((json) => setUserPosition(json.data))
+      .catch(() => {});
+    fetch("/api/v1/vault/stats")
+      .then((r) => r.json())
+      .then((json) => setVaultStats(json.data))
+      .catch(() => {});
+  };
+
   useEffect(() => {
     if (depositSuccess) {
       showToast("Deposit confirmed!", "success");
       setAmount("");
+      // Refresh balances and position after short delay for indexer
+      setTimeout(refreshPosition, 2000);
     }
   }, [depositSuccess]);
 
@@ -84,6 +102,7 @@ export default function VaultPage() {
     if (redeemSuccess) {
       showToast("Withdrawal confirmed!", "success");
       setAmount("");
+      setTimeout(refreshPosition, 2000);
     }
   }, [redeemSuccess]);
 
@@ -102,23 +121,45 @@ export default function VaultPage() {
         const parsedAmount = parseFloat(amount.replace(/,/g, ""));
         const allowanceNum = allowance ? parseFloat(formatUnits(allowance as bigint, 6)) : 0;
         if (allowanceNum < parsedAmount) {
+          // Step 1: Approve — then auto-deposit after approval
+          setPendingDeposit(true);
           approve(amount.replace(/,/g, ""));
-          showToast("Approving USDC...", "info");
+          showToast("Step 1/2: Approving USDC spend...", "info");
         } else {
+          // Already approved — deposit directly
           deposit(amount.replace(/,/g, ""), address);
-          showToast("Depositing...", "info");
+          showToast("Depositing to vault...", "info");
         }
       } else {
         showToast("ETH deposits coming soon — use USDC", "info");
       }
     } else {
-      // Withdraw: redeem shares
       redeem(amount.replace(/,/g, ""), address);
-      showToast("Redeeming shares...", "info");
+      showToast("Redeeming cVault shares...", "info");
     }
   };
 
   const isTxPending = isApproving || isDepositing || isRedeeming || approveConfirming || depositConfirming || redeemConfirming;
+
+  // Dynamic button label based on state
+  const needsApproval = (() => {
+    if (activeTab !== "deposit" || selectedToken !== "USDC" || !amount) return false;
+    const parsedAmount = parseFloat(amount.replace(/,/g, ""));
+    const allowanceNum = allowance ? parseFloat(formatUnits(allowance as bigint, 6)) : 0;
+    return allowanceNum < parsedAmount;
+  })();
+
+  const buttonLabel = (() => {
+    if (isTxPending) {
+      if (isApproving || approveConfirming) return "Approving...";
+      if (isDepositing || depositConfirming) return "Depositing...";
+      if (isRedeeming || redeemConfirming) return "Withdrawing...";
+      return "Processing...";
+    }
+    if (activeTab === "withdraw") return "Redeem cVault Shares";
+    if (needsApproval) return "Approve & Deposit";
+    return "Deposit to Vault";
+  })();
 
   useEffect(() => {
     async function fetchData() {
@@ -369,11 +410,7 @@ export default function VaultPage() {
                 disabled={isTxPending}
                 className="w-full cursor-pointer rounded-xl bg-foreground py-4 font-heading font-bold text-background transition-all duration-300 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isTxPending
-                  ? "Processing..."
-                  : activeTab === "deposit"
-                    ? "Deposit to Vault"
-                    : "Redeem cVault Shares"}
+                {buttonLabel}
               </button>
             </div>
           </div>

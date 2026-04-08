@@ -81,7 +81,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
-            return (
+            return connected ? (
               <Link
                 key={link.href}
                 href={link.href}
@@ -93,6 +93,13 @@ export default function Navbar() {
               >
                 {link.label}
               </Link>
+            ) : (
+              <span
+                key={link.href}
+                className="text-sm text-muted/40 cursor-default select-none"
+              >
+                {link.label}
+              </span>
             );
           })}
         </div>
@@ -118,7 +125,7 @@ export default function Navbar() {
           <div className="max-w-5xl mx-auto px-6 py-4 flex flex-col gap-1">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
-              return (
+              return connected ? (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -131,6 +138,13 @@ export default function Navbar() {
                 >
                   {link.label}
                 </Link>
+              ) : (
+                <span
+                  key={link.href}
+                  className="text-sm px-3 py-2.5 text-muted/40 cursor-default select-none"
+                >
+                  {link.label}
+                </span>
               );
             })}
             <div className="mt-2">{walletButton}</div>

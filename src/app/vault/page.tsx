@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useAccount, useBalance } from "wagmi";
 import { useWallet } from "@/contexts/WalletContext";
@@ -57,30 +57,33 @@ export default function VaultPage() {
   const [loading, setLoading] = useState(true);
 
   // Contract hooks
-  const { approve, isPending: isApproving, isSuccess: approveSuccess, isConfirming: approveConfirming } = useApproveUSDC();
-  const { data: allowance } = useUSDCAllowance(address);
+  const { approve, hash: approveHash, isPending: isApproving, isConfirming: approveConfirming, isSuccess: approveSuccess } = useApproveUSDC();
+  const { data: allowance, refetch: refetchAllowance } = useUSDCAllowance(address);
   const { data: usdcBalance } = useUSDCBalance(address);
   const { data: ethBalance } = useBalance({ address });
   const { deposit, isPending: isDepositing, isSuccess: depositSuccess, isConfirming: depositConfirming } = useDeposit();
   const { redeem, isPending: isRedeeming, isSuccess: redeemSuccess, isConfirming: redeemConfirming } = useRedeem();
   const { data: vaultSharesBigInt } = useVaultShares(address);
 
-  // After approval succeeds, auto-trigger the deposit
-  const [pendingDeposit, setPendingDeposit] = useState(false);
+  // Track deposit flow state
+  const [depositStep, setDepositStep] = useState<"idle" | "approving" | "depositing">("idle");
+  const pendingAmountRef = useRef("");
 
+  // When approval confirms, immediately trigger deposit
   useEffect(() => {
-    if (approveSuccess && pendingDeposit && amount && address && selectedToken === "USDC") {
-      setPendingDeposit(false);
-      deposit(amount.replace(/,/g, ""), address);
-      showToast("Depositing...", "info");
+    if (approveSuccess && depositStep === "approving" && pendingAmountRef.current && address) {
+      setDepositStep("depositing");
+      showToast("Step 2/2: Depositing to vault...", "info");
+      // Refetch allowance first, then deposit
+      refetchAllowance().then(() => {
+        deposit(pendingAmountRef.current, address);
+      });
     }
-  }, [approveSuccess]);
+  }, [approveSuccess, depositStep]);
 
-  // Refresh everything after a tx — refetch on-chain + Supabase
-  const refreshAll = () => {
+  // Refresh everything after a tx
+  const refreshAll = useCallback(() => {
     if (!address) return;
-    // Immediate: refetch on-chain data (vault shares, USDC balance)
-    // wagmi auto-refetches after tx, but force a page-level data refresh too
     fetch("/api/v1/vault/stats")
       .then((r) => r.json())
       .then((json) => setVaultStats(json.data))
@@ -89,19 +92,22 @@ export default function VaultPage() {
       .then((r) => r.json())
       .then((json) => setUserPosition(json.data))
       .catch(() => {});
-  };
+  }, [address]);
 
+  // Deposit confirmed
   useEffect(() => {
     if (depositSuccess) {
+      setDepositStep("idle");
+      pendingAmountRef.current = "";
       showToast("Deposit confirmed!", "success");
       setAmount("");
-      // Refresh immediately, then again after indexer may have synced
       refreshAll();
       setTimeout(refreshAll, 5000);
       setTimeout(refreshAll, 15000);
     }
-  }, [depositSuccess]);
+  }, [depositSuccess, refreshAll]);
 
+  // Withdraw confirmed
   useEffect(() => {
     if (redeemSuccess) {
       showToast("Withdrawal confirmed!", "success");
@@ -110,7 +116,7 @@ export default function VaultPage() {
       setTimeout(refreshAll, 5000);
       setTimeout(refreshAll, 15000);
     }
-  }, [redeemSuccess]);
+  }, [redeemSuccess, refreshAll]);
 
   const handleAction = () => {
     if (!address) {
@@ -124,17 +130,20 @@ export default function VaultPage() {
 
     if (activeTab === "deposit") {
       if (selectedToken === "USDC") {
-        const parsedAmount = parseFloat(amount.replace(/,/g, ""));
+        const cleanAmount = amount.replace(/,/g, "");
+        const parsedAmount = parseFloat(cleanAmount);
         const allowanceNum = allowance ? parseFloat(formatUnits(allowance as bigint, 6)) : 0;
         if (allowanceNum < parsedAmount) {
-          // Step 1: Approve — then auto-deposit after approval
-          setPendingDeposit(true);
-          approve(amount.replace(/,/g, ""));
-          showToast("Step 1/2: Approving USDC spend...", "info");
+          // Need approval first — store amount, start flow
+          pendingAmountRef.current = cleanAmount;
+          setDepositStep("approving");
+          approve(cleanAmount);
+          showToast("Step 1/2: Approve USDC in your wallet...", "info");
         } else {
           // Already approved — deposit directly
-          deposit(amount.replace(/,/g, ""), address);
-          showToast("Depositing to vault...", "info");
+          setDepositStep("depositing");
+          deposit(cleanAmount, address);
+          showToast("Confirm deposit in your wallet...", "info");
         }
       } else {
         showToast("ETH deposits coming soon — use USDC", "info");
@@ -145,7 +154,7 @@ export default function VaultPage() {
     }
   };
 
-  const isTxPending = isApproving || isDepositing || isRedeeming || approveConfirming || depositConfirming || redeemConfirming;
+  const isTxPending = depositStep !== "idle" || isApproving || isDepositing || isRedeeming || approveConfirming || depositConfirming || redeemConfirming;
 
   // Dynamic button label based on state
   const needsApproval = (() => {
@@ -156,12 +165,9 @@ export default function VaultPage() {
   })();
 
   const buttonLabel = (() => {
-    if (isTxPending) {
-      if (isApproving || approveConfirming) return "Approving...";
-      if (isDepositing || depositConfirming) return "Depositing...";
-      if (isRedeeming || redeemConfirming) return "Withdrawing...";
-      return "Processing...";
-    }
+    if (depositStep === "approving" || isApproving || approveConfirming) return "Approving USDC...";
+    if (depositStep === "depositing" || isDepositing || depositConfirming) return "Depositing...";
+    if (isRedeeming || redeemConfirming) return "Withdrawing...";
     if (activeTab === "withdraw") return "Redeem cVault Shares";
     if (needsApproval) return "Approve & Deposit";
     return "Deposit to Vault";

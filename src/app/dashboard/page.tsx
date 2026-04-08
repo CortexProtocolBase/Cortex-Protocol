@@ -142,16 +142,13 @@ export default function DashboardPage() {
     // deduplicate by date string
     .filter((d, i, arr) => i === 0 || d.date !== arr[i - 1].date);
 
+  // Filter by selected range; if empty, fall back to showing all available data
   const filteredPerfData = filterByTimeRange(rawPerfData, activeFilter);
+  const displayData = filteredPerfData.length > 0 ? filteredPerfData : rawPerfData;
 
-  const chartData = filteredPerfData.map((d) => {
+  const chartData = displayData.map((d) => {
     const dt = new Date(d.date);
-    const label =
-      activeFilter === "1D"
-        ? dt.toLocaleTimeString("default", { hour: "2-digit", minute: "2-digit" })
-        : activeFilter === "1W"
-          ? dt.toLocaleDateString("default", { weekday: "short", month: "short", day: "numeric" })
-          : dt.toLocaleDateString("default", { month: "short", day: "numeric" });
+    const label = dt.toLocaleDateString("default", { month: "short", day: "numeric" });
     return { month: label, value: d.value };
   });
 
@@ -287,7 +284,11 @@ export default function DashboardPage() {
                     tick={{ fill: "#a1a1aa", fontSize: 12 }}
                     axisLine={false}
                     tickLine={false}
-                    tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                    tickFormatter={(v: number) =>
+                      v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` :
+                      v >= 1e3 ? `$${(v / 1e3).toFixed(0)}k` :
+                      `$${v}`
+                    }
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Area

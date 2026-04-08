@@ -10,6 +10,7 @@ import { Coins, Lock, Gift, TrendingUp, Info } from "lucide-react";
 import type { StakingInfoResponse } from "@/lib/types";
 import { useApproveForStaking, useStake, useUnstake, useClaimRewards, useCortexBalance } from "@/hooks/useStaking";
 import { LOCK_TIERS } from "@/lib/constants";
+import WalletGate from "@/components/WalletGate";
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
@@ -167,6 +168,7 @@ export default function StakePage() {
     <>
       <Navbar />
 
+      <WalletGate>
       <main className="pt-28 pb-20 max-w-5xl mx-auto px-6">
         {/* ----- Header ----- */}
         <div>
@@ -401,6 +403,7 @@ export default function StakePage() {
           </>
         )}
       </main>
+      </WalletGate>
     </>
   );
 }

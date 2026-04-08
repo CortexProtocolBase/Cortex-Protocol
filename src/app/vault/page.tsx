@@ -28,6 +28,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import WalletGate from "@/components/WalletGate";
 
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
@@ -216,6 +217,7 @@ export default function VaultPage() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
+      <WalletGate>
       <main className="mx-auto max-w-5xl px-6 pt-28 pb-20">
         {/* Header */}
         <section>
@@ -550,6 +552,7 @@ export default function VaultPage() {
           </div>
         </section>
       </main>
+      </WalletGate>
     </div>
   );
 }

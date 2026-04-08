@@ -28,6 +28,7 @@ import {
   FileText,
   Wallet,
 } from "lucide-react";
+import WalletGate from "@/components/WalletGate";
 
 /* ───────── Icon mapping for parameters ───────── */
 
@@ -129,6 +130,7 @@ export default function GovernancePage() {
     <>
       <Navbar />
 
+      <WalletGate>
       <main className="min-h-screen bg-background pt-28 pb-20">
         <div className="max-w-5xl mx-auto px-6">
           {/* ── Header ── */}
@@ -391,6 +393,7 @@ export default function GovernancePage() {
           </section>
         </div>
       </main>
+      </WalletGate>
     </>
   );
 }

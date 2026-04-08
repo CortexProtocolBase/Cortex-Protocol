@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { showToast } from "@/components/Toast";
 import { Brain, TrendingUp, Clock, Activity, Info } from "lucide-react";
 import type { AiInsightsResponse, ReasoningFeedEntry } from "@/lib/types";
+import WalletGate from "@/components/WalletGate";
 
 /* ------------------------------------------------------------------ */
 /*  Decision badge styles                                              */
@@ -69,6 +70,7 @@ export default function AIPage() {
     <>
       <Navbar />
 
+      <WalletGate>
       <main className="pt-28 pb-20 max-w-5xl mx-auto px-6">
         {/* ----- Header ----- */}
         <div>
@@ -207,6 +209,7 @@ export default function AIPage() {
           </>
         )}
       </main>
+      </WalletGate>
     </>
   );
 }

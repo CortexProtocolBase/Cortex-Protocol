@@ -20,6 +20,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import WalletGate from "@/components/WalletGate";
 
 const timeFilters = ["1W", "1M", "3M", "6M", "1Y", "ALL"] as const;
 
@@ -139,6 +140,7 @@ export default function DashboardPage() {
     <>
       <Navbar />
 
+      <WalletGate>
       <main className="pt-28 pb-20 max-w-5xl mx-auto px-6">
         {/* ----- Header ----- */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -339,6 +341,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+      </WalletGate>
     </>
   );
 }

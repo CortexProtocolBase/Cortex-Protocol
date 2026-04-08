@@ -31,6 +31,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
+import WalletGate from "@/components/WalletGate";
 
 /* ------------------------------------------------------------------ */
 /*  Static maps                                                        */
@@ -202,6 +203,7 @@ export default function StrategyPage() {
     <>
       <Navbar />
 
+      <WalletGate>
       <main className="pt-28 pb-20 max-w-5xl mx-auto px-6">
         {/* ---- HEADER ---- */}
         <section>
@@ -547,6 +549,7 @@ export default function StrategyPage() {
           })}
         </section>
       </main>
+      </WalletGate>
     </>
   );
 }

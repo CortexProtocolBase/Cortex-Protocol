@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import { Download, ChevronDown } from "lucide-react";
 import type { TradeResponse } from "@/lib/types";
 import { showToast } from "@/components/Toast";
+import WalletGate from "@/components/WalletGate";
 
 /* ------------------------------------------------------------------ */
 /*  Types & Data                                                       */
@@ -185,6 +186,7 @@ export default function TradesPage() {
     <>
       <Navbar />
 
+      <WalletGate>
       <main className="pt-28 pb-20 max-w-5xl mx-auto px-6">
         {/* ---- HEADER ---- */}
         <section className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -376,6 +378,7 @@ export default function TradesPage() {
           </div>
         </section>
       </main>
+      </WalletGate>
     </>
   );
 }

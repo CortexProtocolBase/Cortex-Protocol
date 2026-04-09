@@ -439,7 +439,7 @@ function CaButton() {
   return (
     <button
       onClick={handleCopy}
-      className="mt-4 cursor-pointer inline-flex items-center gap-2 rounded-lg border border-border bg-card-solid/50 px-4 py-2 text-sm font-mono text-muted transition-all duration-200 hover:text-foreground hover:border-border-hover"
+      className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-border bg-card-solid/50 px-4 py-2.5 text-sm font-mono text-muted transition-all duration-200 hover:text-foreground hover:border-border-hover"
     >
       <span className="text-muted/60">CA:</span>
       <span>{CONTRACT_ADDRESS.slice(0, 6)}...{CONTRACT_ADDRESS.slice(-4)}</span>
@@ -567,9 +567,8 @@ export default function Home() {
               >
                 <Github className="h-4 w-4" />
               </a>
+              <CaButton />
             </div>
-
-            <CaButton />
           </div>
 
           <AnimatedTerminal />

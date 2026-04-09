@@ -89,6 +89,7 @@ export default function VaultPage() {
   useEffect(() => {
     if (depositSuccess) {
       showToast("Deposit confirmed!", "success");
+      setTimeout(() => showToast("It may take a couple minutes for your balance to update.", "info"), 1500);
       setAmount("");
       refreshAll();
       setTimeout(refreshAll, 5000);
@@ -99,6 +100,7 @@ export default function VaultPage() {
   useEffect(() => {
     if (redeemSuccess) {
       showToast("Withdrawal confirmed!", "success");
+      setTimeout(() => showToast("It may take a couple minutes for your balance to update.", "info"), 1500);
       setAmount("");
       refreshAll();
       setTimeout(refreshAll, 5000);

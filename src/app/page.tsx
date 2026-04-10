@@ -424,7 +424,7 @@ const faqItems = [
   },
 ];
 
-const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000";
+const CONTRACT_ADDRESS = "0x510f5c52d0450617b1ee96ff64909ad9cbfb6b07";
 
 function CaButton() {
   const [copied, setCopied] = useState(false);

@@ -1,0 +1,52 @@
+{
+  "name": "@cortex-protocol/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Cortex Protocol — AI-managed vaults on Base. Provides ABIs, contract addresses, types, and a viem-powered client for reading vault, token, staking, governance, and treasury state.",
+  "license": "MIT",
+  "homepage": "https://github.com/CortexProtocolBase/Cortex-Protocol",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CortexProtocolBase/Cortex-Protocol.git",
+    "directory": "sdk"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./abis": {
+      "types": "./dist/abis/index.d.ts",
+      "import": "./dist/abis/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "cortex",
+    "cortex-protocol",
+    "defi",
+    "base",
+    "vault",
+    "ai",
+    "viem",
+    "ethereum"
+  ],
+  "peerDependencies": {
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "viem": "^2.47.4"
+  }
+}
